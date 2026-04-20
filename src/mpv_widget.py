@@ -75,8 +75,9 @@ class MpvWidget(QWidget):
     def set_volume(self, value):
         self.player.volume = max(0, min(100, value))
 
-    def get_volume(self):
-        return self.player.volume or 100
+    def get_volume(self) -> float:
+        v = self.player.volume
+        return v if v is not None else 100.0
 
     def set_speed(self, speed):
         self.player.speed = speed
