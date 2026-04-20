@@ -32,12 +32,38 @@ a = Analysis(
         'PySide6.QtRemoteObjects', 'PySide6.QtSql', 'PySide6.QtTest',
         'PySide6.QtXml', 'PySide6.QtHelp', 'PySide6.QtSvgWidgets',
         'PySide6.QtWebSockets', 'PySide6.QtConcurrent',
+        'PIL', 'Pillow', 'ssl', '_ssl',
     ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,
     noarchive=False,
 )
+
+# 过滤不需要的 Qt DLL（excludes 只排除 Python 模块，不拦截 DLL）
+EXCLUDE_DLLS = {
+    'Qt6Network', 'Qt6OpenGL', 'Qt6Pdf', 'Qt6Qml', 'Qt6QmlMeta',
+    'Qt6QmlModels', 'Qt6QmlWorkerScript', 'Qt6Quick', 'Qt6Svg',
+    'Qt6VirtualKeyboard', 'Qt6WebEngine', 'Qt6ShaderTools',
+    'Qt6Quick3D', 'Qt63D', 'Qt6Charts', 'Qt6Graphs', 'Qt6Designer',
+    'opengl32sw', 'qtvirtualkeyboardplugin', 'qpdf',
+    'qdirect2d', 'qminimal', 'qoffscreen', 'qtuiotouchplugin',
+    'qicns', 'qtga', 'qtiff', 'qwbmp',
+    'libcrypto', 'libssl',
+    '_imaging', '_webp',
+}
+a.binaries = [
+    b for b in a.binaries
+    if not any(name in b[0] for name in EXCLUDE_DLLS)
+]
+a.datas = [
+    d for d in a.datas
+    if 'translations' not in d[0]
+]
+a.binaries = [
+    b for b in a.binaries
+    if not any(name in b[0] for name in EXCLUDE_DLLS)
+]
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
