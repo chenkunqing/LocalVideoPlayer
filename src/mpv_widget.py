@@ -92,5 +92,9 @@ class MpvWidget(QWidget):
     def current_duration(self):
         return self.player.duration or 0.0
 
+    @property
+    def is_eof(self):
+        return bool(self.player.eof_reached)
+
     def destroy(self):
         self.player.terminate()

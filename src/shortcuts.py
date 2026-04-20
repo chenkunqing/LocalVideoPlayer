@@ -22,6 +22,10 @@ def setup_shortcuts(window, config: ShortcutConfig) -> list[QShortcut]:
             shortcuts.append(sc)
 
     def play_pause():
+        if mpv.is_eof:
+            mpv.seek_absolute(0)
+            mpv.set_pause(False)
+            return
         mpv.toggle_pause()
 
     def seek_fwd_1():

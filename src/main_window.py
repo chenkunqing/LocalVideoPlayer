@@ -122,7 +122,7 @@ class MainWindow(QWidget):
         overlay.progress_bar.seek_requested.connect(mpv.seek_absolute)
         overlay.progress_bar.drag_seek_requested.connect(mpv.seek_keyframe)
 
-        overlay.play_button.clicked.connect(mpv.toggle_pause)
+        overlay.play_button.clicked.connect(self._play_or_restart)
         overlay.fullscreen_requested.connect(self.toggle_fullscreen)
 
         overlay.volume_slider.valueChanged.connect(lambda v: mpv.set_volume(v))
@@ -171,6 +171,13 @@ class MainWindow(QWidget):
         if self.current_file:
             kfs = self.keyframe_manager.get_keyframes(self.current_file)
             self.controls_overlay.set_keyframes(kfs)
+
+    def _play_or_restart(self):
+        if self.mpv_widget.is_eof:
+            self.mpv_widget.seek_absolute(0)
+            self.mpv_widget.set_pause(False)
+        else:
+            self.mpv_widget.toggle_pause()
 
     def toggle_fullscreen(self):
         if self._is_fullscreen:
@@ -275,7 +282,11 @@ class MainWindow(QWidget):
                 bottom_bar = overlay._bottom_bar
                 if not g_top.contains(int(pos.x()), int(local_y)) and \
                    not bottom_bar.underMouse():
-                    self.mpv_widget.toggle_pause()
+                    if self.mpv_widget.is_eof:
+                        self.mpv_widget.seek_absolute(0)
+                        self.mpv_widget.set_pause(False)
+                    else:
+                        self.mpv_widget.toggle_pause()
         super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
