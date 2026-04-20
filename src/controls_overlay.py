@@ -192,7 +192,7 @@ class ControlsOverlay(QWidget):
         self._top_fade.setEasingCurve(QEasingCurve.Type.InOutQuad)
         top_layout = QVBoxLayout(self._top_bar)
         top_layout.setContentsMargins(24, 12, 24, 0)
-        self._title_label = QLabel("PureView 播放器")
+        self._title_label = QLabel("KK Player")
         self._title_label.setStyleSheet(f"color: {COLOR_TEXT}; font-size: 18px; font-weight: bold; background: transparent;")
         self._meta_label = QLabel("拖拽视频文件到此处开始播放")
         self._meta_label.setStyleSheet(f"color: {COLOR_TEXT_DIM}; font-size: 12px; background: transparent;")

@@ -1,4 +1,4 @@
-"""PureView 视频播放器 — 入口"""
+"""KK Player — 入口"""
 
 import os
 import sys
@@ -40,7 +40,7 @@ GLOBAL_STYLE = f"""
 
 def main():
     app = QApplication(sys.argv)
-    app.setApplicationName("PureView")
+    app.setApplicationName("KK Player")
     app.setStyle("Fusion")
     app.setStyleSheet(GLOBAL_STYLE)
 

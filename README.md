@@ -1,4 +1,4 @@
-# PureView - 本地视频播放器
+# KK Player - 本地视频播放器
 
 极简风格的本地视频播放器，基于 libmpv 引擎，提供流畅的播放体验与关键帧标记、播放列表管理等实用功能。
 
@@ -89,7 +89,7 @@ python src/main.py "C:\path\to\video.mp4"
 pyinstaller build.spec
 ```
 
-输出路径：`dist/PureView/PureView.exe`
+输出路径：`dist/KKPlayer/KKPlayer.exe`
 
 ## 默认快捷键
 
@@ -118,7 +118,7 @@ pyinstaller build.spec
 ## 项目结构
 
 ```
-PureView/
+KKPlayer/
 ├── src/                    # 源代码
 │   ├── main.py             # 入口，全局样式
 │   ├── main_window.py      # 主窗口，视图切换

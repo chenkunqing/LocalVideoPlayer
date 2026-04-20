@@ -26,7 +26,7 @@ class MainWindow(QWidget):
     def __init__(self, data_dir):
         super().__init__()
         self.setObjectName("MainWindow")
-        self.setWindowTitle("PureView Player")
+        self.setWindowTitle("KK Player")
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setStyleSheet("#MainWindow { background-color: #09090b; }")
         self.resize(WINDOW_DEFAULT_WIDTH, WINDOW_DEFAULT_HEIGHT)

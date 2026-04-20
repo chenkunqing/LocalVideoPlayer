@@ -1,5 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
-# PureView 视频播放器 PyInstaller 打包配置
+# KK Player PyInstaller 打包配置
 
 import os
 
@@ -29,7 +29,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='PureView',
+    name='KKPlayer',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -51,5 +51,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='PureView',
+    name='KKPlayer',
 )
