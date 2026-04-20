@@ -10,20 +10,20 @@ from constants import SHORTCUTS, SHORTCUTS_FILE
 
 
 SHORTCUT_LABELS: dict[str, str] = {
+    "keyframe_add": "添加关键帧",
+    "keyframe_delete": "删除关键帧",
+    "keyframe_next": "下一关键帧",
+    "keyframe_prev": "上一关键帧",
     "play_pause": "播放/暂停",
-    "seek_forward_5": "快进 5 秒",
-    "seek_backward_5": "快退 5 秒",
-    "seek_forward_30": "快进 30 秒",
-    "seek_backward_30": "快退 30 秒",
+    "seek_forward_1": "快进 1 秒",
+    "seek_backward_1": "快退 1 秒",
+    "seek_forward_3": "快进 3 秒",
+    "seek_backward_3": "快退 3 秒",
     "volume_up": "音量增大",
     "volume_down": "音量减小",
     "mute_toggle": "静音切换",
     "fullscreen_toggle": "全屏切换",
     "escape_fullscreen": "退出全屏",
-    "keyframe_add": "添加关键帧",
-    "keyframe_delete": "删除关键帧",
-    "keyframe_next": "下一关键帧",
-    "keyframe_prev": "上一关键帧",
     "speed_up": "加速播放",
     "speed_down": "减速播放",
     "speed_reset": "重置速度",
@@ -68,6 +68,12 @@ class ShortcutConfig(QObject):
                 self._overrides[other_action] = old_seq
                 break
         self._overrides[action] = key_seq
+        self._save()
+        self.shortcuts_changed.emit()
+
+    def clear_binding(self, action: str) -> None:
+        """清除某个动作的快捷键绑定"""
+        self._overrides[action] = ""
         self._save()
         self.shortcuts_changed.emit()
 

@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
 from constants import (
     COLOR_BG, COLOR_PANEL, COLOR_BORDER, COLOR_ACCENT,
     COLOR_TEXT, COLOR_TEXT_DIM, COLOR_TEXT_DARK,
-    COLOR_PROGRESS_BG, COLOR_WHITE, COLOR_BLACK, SHORTCUTS,
+    COLOR_PROGRESS_BG, COLOR_WHITE, COLOR_BLACK, COLOR_RED, SHORTCUTS,
 )
 from shortcut_config import ShortcutConfig, SHORTCUT_LABELS
 
@@ -20,18 +20,23 @@ class _KeyBindingButton(QPushButton):
     binding_changed = Signal(str, str)
 
     def __init__(self, action: str, current_seq: str, parent: QWidget | None = None):
-        super().__init__(current_seq, parent)
+        super().__init__(parent)
         self._action = action
         self._recording = False
         self._current_seq = current_seq
         self.setFixedSize(140, 32)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._apply_display_text()
         self._apply_normal_style()
 
     def set_sequence(self, seq: str) -> None:
         self._current_seq = seq
         if not self._recording:
-            self.setText(seq)
+            self._apply_display_text()
+            self._apply_normal_style()
+
+    def _apply_display_text(self) -> None:
+        self.setText(self._current_seq if self._current_seq else "未设置")
 
     def mousePressEvent(self, event: object) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
@@ -90,16 +95,17 @@ class _KeyBindingButton(QPushButton):
     def _cancel_recording(self) -> None:
         self._recording = False
         self.releaseKeyboard()
-        self.setText(self._current_seq)
+        self._apply_display_text()
         self._apply_normal_style()
 
     def _apply_normal_style(self) -> None:
+        text_color = COLOR_TEXT if self._current_seq else COLOR_TEXT_DARK
         self.setStyleSheet(f"""
             QPushButton {{
                 background: rgba(63, 63, 70, 0.4);
                 border: 1px solid {COLOR_PROGRESS_BG};
                 border-radius: 6px;
-                color: {COLOR_TEXT};
+                color: {text_color};
                 font-size: 12px;
                 font-family: 'Consolas', 'Courier New', monospace;
                 padding: 0 12px;
@@ -113,12 +119,14 @@ class _KeyBindingButton(QPushButton):
 
 class _ShortcutRow(QWidget):
     """单行快捷键设置"""
+    clear_requested = Signal(str)
 
     def __init__(
         self, action: str, label: str, seq: str,
         parent: QWidget | None = None,
     ):
         super().__init__(parent)
+        self._action = action
         self.setFixedHeight(48)
 
         layout = QHBoxLayout(self)
@@ -135,6 +143,27 @@ class _ShortcutRow(QWidget):
 
         self.button = _KeyBindingButton(action, seq)
         layout.addWidget(self.button)
+
+        self.delete_button = QPushButton("×")
+        self.delete_button.setFixedSize(32, 32)
+        self.delete_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.delete_button.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent;
+                border: 1px solid transparent;
+                border-radius: 6px;
+                color: {COLOR_TEXT_DIM};
+                font-size: 16px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background: rgba(220, 38, 38, 0.15);
+                border-color: {COLOR_RED};
+                color: {COLOR_RED};
+            }}
+        """)
+        self.delete_button.clicked.connect(lambda: self.clear_requested.emit(self._action))
+        layout.addWidget(self.delete_button)
 
 
 class ShortcutSettingsPanel(QWidget):
@@ -236,6 +265,7 @@ class ShortcutSettingsPanel(QWidget):
             seq = current.get(action, "")
             row = _ShortcutRow(action, label, seq)
             row.button.binding_changed.connect(self._on_binding_changed)
+            row.clear_requested.connect(self._on_clear_binding)
             rows_layout.addWidget(row)
             self._buttons[action] = row.button
 
@@ -249,6 +279,9 @@ class ShortcutSettingsPanel(QWidget):
         conflict = self._config.set_binding(action, new_seq)
         if conflict is not None:
             self._config.swap_binding(action, new_seq)
+
+    def _on_clear_binding(self, action: str) -> None:
+        self._config.clear_binding(action)
 
     def _on_reset_all(self) -> None:
         self._config.reset_all()

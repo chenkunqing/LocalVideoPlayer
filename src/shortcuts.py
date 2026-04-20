@@ -24,17 +24,17 @@ def setup_shortcuts(window, config: ShortcutConfig) -> list[QShortcut]:
     def play_pause():
         mpv.toggle_pause()
 
-    def seek_fwd_5():
-        mpv.seek(5)
+    def seek_fwd_1():
+        mpv.seek(1)
 
-    def seek_bwd_5():
-        mpv.seek(-5)
+    def seek_bwd_1():
+        mpv.seek(-1)
 
-    def seek_fwd_30():
-        mpv.seek(30)
+    def seek_fwd_3():
+        mpv.seek(3)
 
-    def seek_bwd_30():
-        mpv.seek(-30)
+    def seek_bwd_3():
+        mpv.seek(-3)
 
     def volume_up():
         v = min(100, mpv.get_volume() + 5)
@@ -102,10 +102,10 @@ def setup_shortcuts(window, config: ShortcutConfig) -> list[QShortcut]:
         overlay.speed_button.setText("1.0x")
 
     _bind("play_pause", play_pause)
-    _bind("seek_forward_5", seek_fwd_5)
-    _bind("seek_backward_5", seek_bwd_5)
-    _bind("seek_forward_30", seek_fwd_30)
-    _bind("seek_backward_30", seek_bwd_30)
+    _bind("seek_forward_1", seek_fwd_1)
+    _bind("seek_backward_1", seek_bwd_1)
+    _bind("seek_forward_3", seek_fwd_3)
+    _bind("seek_backward_3", seek_bwd_3)
     _bind("volume_up", volume_up)
     _bind("volume_down", volume_down)
     _bind("mute_toggle", mute_toggle)

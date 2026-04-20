@@ -8,7 +8,7 @@ import uuid
 from PySide6.QtCore import QObject, Signal
 
 from constants import LIBRARY_FILE, PLAYLIST_COLORS
-from video_scanner import VideoItem, scan_folder, scan_file, ScanWorker
+from video_scanner import VideoItem, scan_folder, scan_file, probe_durations, ScanWorker
 
 
 class VideoLibrary(QObject):
@@ -25,6 +25,7 @@ class VideoLibrary(QObject):
         self._recent: list[dict[str, object]] = []
         self._playlists: list[dict[str, object]] = []
         self._videos: list[VideoItem] = []
+        self._duration_cache: dict[str, float] = {}
         self._scan_worker: ScanWorker | None = None
         self._load()
 
@@ -37,6 +38,7 @@ class VideoLibrary(QObject):
             self._folders = data.get("folders", [])
             self._recent = data.get("recent", [])
             self._playlists = data.get("playlists", [])
+            self._duration_cache = data.get("durations", {})
         except (json.JSONDecodeError, OSError):
             pass
 
@@ -45,6 +47,7 @@ class VideoLibrary(QObject):
             "folders": self._folders,
             "recent": self._recent,
             "playlists": self._playlists,
+            "durations": self._duration_cache,
         }
         os.makedirs(os.path.dirname(self._data_path), exist_ok=True)
         tmp = self._data_path + ".tmp"
@@ -86,7 +89,11 @@ class VideoLibrary(QObject):
             return
         existing_paths = {v.path for v in self._videos}
         if item.path not in existing_paths:
+            dur_map = probe_durations([item.path], self._duration_cache)
+            item.duration = dur_map.get(item.path, 0.0)
+            self._duration_cache.update(dur_map)
             self._videos.append(item)
+            self._save()
             self.library_changed.emit()
 
     def rescan(self):
@@ -97,11 +104,11 @@ class VideoLibrary(QObject):
             self._videos.clear()
             self.library_changed.emit()
             return
-        self._scan_worker = ScanWorker(self._folders, self)
+        self._scan_worker = ScanWorker(self._folders, self._duration_cache, self)
         self._scan_worker.finished.connect(self._on_scan_done)
         self._scan_worker.start()
 
-    def _on_scan_done(self, items: list[VideoItem]):
+    def _on_scan_done(self, items: list[VideoItem], dur_map: dict[str, float]):
         seen: set[str] = set()
         unique: list[VideoItem] = []
         for item in items:
@@ -109,6 +116,8 @@ class VideoLibrary(QObject):
                 seen.add(item.path)
                 unique.append(item)
         self._videos = unique
+        self._duration_cache.update(dur_map)
+        self._save()
         self.library_changed.emit()
 
     def add_recent(self, path: str, progress: float = 0.0):
@@ -229,6 +238,7 @@ class VideoLibrary(QObject):
             elif os.path.isfile(p):
                 item = scan_file(p)
                 if item:
+                    item.duration = self._duration_cache.get(item.path, 0.0)
                     result.append(item)
         return result
 

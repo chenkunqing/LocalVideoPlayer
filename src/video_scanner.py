@@ -1,6 +1,8 @@
 """视频文件扫描器"""
 
+import locale
 import os
+import threading
 from dataclasses import dataclass, field
 
 from PySide6.QtCore import QThread, Signal
@@ -65,16 +67,68 @@ def scan_file(file_path: str) -> VideoItem | None:
     )
 
 
+def probe_durations(
+    paths: list[str], cache: dict[str, float]
+) -> dict[str, float]:
+    """用 headless mpv 实例批量探测视频时长，跳过已缓存的"""
+    result = dict(cache)
+    uncached = [p for p in paths if p not in result or result[p] <= 0]
+    if not uncached:
+        return result
+
+    import mpv
+
+    locale.setlocale(locale.LC_NUMERIC, "C")
+    ready = threading.Event()
+    dur_val: list[float] = [0.0]
+
+    player = mpv.MPV(vid="no", ao="null", really_quiet=True)
+
+    @player.property_observer("duration")
+    def _on_dur(_name: str, value: object) -> None:
+        if isinstance(value, (int, float)) and value > 0:
+            dur_val[0] = float(value)
+            ready.set()
+
+    for path in uncached:
+        ready.clear()
+        dur_val[0] = 0.0
+        try:
+            player.play(path)
+            ready.wait(timeout=3)
+            if dur_val[0] > 0:
+                result[path] = dur_val[0]
+        except Exception:
+            pass
+
+    try:
+        player.terminate()
+    except Exception:
+        pass
+
+    return result
+
+
 class ScanWorker(QThread):
     """后台扫描线程"""
-    finished = Signal(list)
+    finished = Signal(list, dict)
 
-    def __init__(self, folders: list[str], parent=None):
+    def __init__(
+        self, folders: list[str], duration_cache: dict[str, float] | None = None, parent=None
+    ):
         super().__init__(parent)
         self._folders = folders
+        self._duration_cache = duration_cache or {}
 
     def run(self):
         results: list[VideoItem] = []
         for folder in self._folders:
             results.extend(scan_folder(folder))
-        self.finished.emit(results)
+
+        paths = [item.path for item in results]
+        dur_map = probe_durations(paths, self._duration_cache)
+
+        for item in results:
+            item.duration = dur_map.get(item.path, 0.0)
+
+        self.finished.emit(results, dur_map)

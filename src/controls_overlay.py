@@ -208,9 +208,10 @@ class ControlsOverlay(QWidget):
         self._center.setMouseTracking(True)
         layout.addWidget(self._center, 1)
 
-        # 底部控制栏
-        self._bottom_bar = _GradientWidget("bottom")
-        self._bottom_bar.setMinimumHeight(110)
+        # 底部控制栏（独立于视频区域，不使用渐变）
+        self._bottom_bar = QWidget()
+        self._bottom_bar.setStyleSheet(f"background-color: {COLOR_PANEL};")
+        self._bottom_bar.setFixedHeight(110)
         self._bottom_bar.setMouseTracking(True)
         bottom_layout = QVBoxLayout(self._bottom_bar)
         bottom_layout.setContentsMargins(16, 20, 16, 12)
@@ -335,7 +336,6 @@ class ControlsOverlay(QWidget):
         btn_row.addWidget(self._fs_btn)
 
         bottom_layout.addLayout(btn_row)
-        layout.addWidget(self._bottom_bar)
 
     # region 公开接口
 
@@ -442,12 +442,9 @@ class ControlsOverlay(QWidget):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
-            # 检查点击是否在中心区域
             pos = event.position()
             top_rect = self._top_bar.geometry()
-            bottom_rect = self._bottom_bar.geometry()
-            if not top_rect.contains(int(pos.x()), int(pos.y())) and \
-               not bottom_rect.contains(int(pos.x()), int(pos.y())):
+            if not top_rect.contains(int(pos.x()), int(pos.y())):
                 return  # 由 main_window 处理中心区域点击
         super().mousePressEvent(event)
 
@@ -455,9 +452,7 @@ class ControlsOverlay(QWidget):
         if event.button() == Qt.MouseButton.LeftButton:
             pos = event.position()
             top_rect = self._top_bar.geometry()
-            bottom_rect = self._bottom_bar.geometry()
-            if not top_rect.contains(int(pos.x()), int(pos.y())) and \
-               not bottom_rect.contains(int(pos.x()), int(pos.y())):
+            if not top_rect.contains(int(pos.x()), int(pos.y())):
                 self.fullscreen_requested.emit()
 
     # endregion

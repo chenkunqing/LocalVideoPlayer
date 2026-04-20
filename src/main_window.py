@@ -2,8 +2,8 @@
 
 import os
 
-from PySide6.QtCore import Qt, QTimer, QUrl
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QStackedLayout, QStackedWidget
+from PySide6.QtCore import Qt, QTimer, QUrl, QEvent
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QStackedWidget
 
 from constants import (
     WINDOW_DEFAULT_WIDTH, WINDOW_DEFAULT_HEIGHT,
@@ -68,20 +68,25 @@ class MainWindow(QWidget):
         self.playlist_view.play_video_requested.connect(self._on_play_requested)
         self._view_stack.addWidget(self.playlist_view)
 
-        # 视频 + 控制栏叠加容器
-        player_container = QWidget()
-        player_container.setMouseTracking(True)
-        self._player_stack = QStackedLayout(player_container)
-        self._player_stack.setStackingMode(QStackedLayout.StackingMode.StackAll)
+        # 播放器视图（视频 + 底部控制栏）
+        player_view = QWidget()
+        player_view.setMouseTracking(True)
+        pv_layout = QVBoxLayout(player_view)
+        pv_layout.setContentsMargins(0, 0, 0, 0)
+        pv_layout.setSpacing(0)
 
         self.mpv_widget = MpvWidget()
         self.controls_overlay = ControlsOverlay()
 
-        self._player_stack.addWidget(self.mpv_widget)
-        self._player_stack.addWidget(self.controls_overlay)
-        self._player_stack.setCurrentIndex(1)
+        # 顶部信息栏浮动在视频上方（不参与布局）
+        self.controls_overlay._top_bar.setParent(self.mpv_widget)
+        self.controls_overlay._top_bar.raise_()
+        self.mpv_widget.installEventFilter(self)
 
-        self._view_stack.addWidget(player_container)
+        pv_layout.addWidget(self.mpv_widget, 1)
+        pv_layout.addWidget(self.controls_overlay._bottom_bar)
+
+        self._view_stack.addWidget(player_view)
 
         main_layout.addWidget(self._view_stack, 1)
 
@@ -266,10 +271,10 @@ class MainWindow(QWidget):
             if pos.y() > title_h:
                 overlay = self.controls_overlay
                 g_top = overlay._top_bar.geometry()
-                g_bottom = overlay._bottom_bar.geometry()
                 local_y = pos.y() - title_h
+                bottom_bar = overlay._bottom_bar
                 if not g_top.contains(int(pos.x()), int(local_y)) and \
-                   not g_bottom.contains(int(pos.x()), int(local_y)):
+                   not bottom_bar.underMouse():
                     self.mpv_widget.toggle_pause()
         super().mousePressEvent(event)
 
