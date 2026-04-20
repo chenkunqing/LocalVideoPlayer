@@ -317,23 +317,53 @@ class _CreatePlaylistDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("创建新列表")
-        self.setFixedSize(360, 160)
-        self.setStyleSheet(f"""
-            QDialog {{
+        self.setWindowFlags(
+            Qt.WindowType.Dialog
+            | Qt.WindowType.FramelessWindowHint
+        )
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setFixedSize(400, 200)
+
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+
+        frame = QWidget()
+        frame.setObjectName("dialogFrame")
+        frame.setStyleSheet(f"""
+            #dialogFrame {{
                 background: {COLOR_PANEL};
                 border: 1px solid {COLOR_BORDER};
                 border-radius: 12px;
             }}
         """)
+        outer.addWidget(frame)
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(24, 24, 24, 24)
+        layout = QVBoxLayout(frame)
+        layout.setContentsMargins(24, 20, 24, 24)
         layout.setSpacing(16)
 
-        label = QLabel("列表名称")
-        label.setStyleSheet(f"color: {COLOR_TEXT}; font-size: 14px; font-weight: bold; background: transparent;")
-        layout.addWidget(label)
+        # 自定义标题栏
+        title_row = QHBoxLayout()
+        title_label = QLabel("创建新列表")
+        title_label.setStyleSheet(f"color: {COLOR_TEXT}; font-size: 15px; font-weight: bold; background: transparent;")
+        title_row.addWidget(title_label)
+        title_row.addStretch()
+        close_btn = QPushButton("✕")
+        close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        close_btn.setFixedSize(28, 28)
+        close_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent;
+                color: {COLOR_TEXT_DIM};
+                border: none;
+                border-radius: 14px;
+                font-size: 14px;
+            }}
+            QPushButton:hover {{ background: rgba(63, 63, 70, 0.8); color: {COLOR_TEXT}; }}
+        """)
+        close_btn.clicked.connect(self.reject)
+        title_row.addWidget(close_btn)
+        layout.addLayout(title_row)
 
         self.name_input = QLineEdit()
         self.name_input.setPlaceholderText("输入播放列表名称...")
@@ -345,6 +375,9 @@ class _CreatePlaylistDialog(QDialog):
                 padding: 10px 16px;
                 font-size: 13px;
                 color: {COLOR_TEXT};
+            }}
+            QLineEdit::placeholder {{
+                color: {COLOR_TEXT_DARK};
             }}
             QLineEdit:focus {{
                 border-color: {COLOR_ACCENT};
