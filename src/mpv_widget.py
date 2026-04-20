@@ -62,8 +62,8 @@ class MpvWidget(QWidget):
     def set_pause(self, paused):
         self.player.pause = paused
 
-    def seek(self, seconds, reference="relative"):
-        self.player.seek(seconds, reference=reference)
+    def seek(self, seconds: float, reference: str = "relative") -> None:
+        self.player.seek(seconds, reference=reference, precision="exact")
 
     def seek_absolute(self, seconds):
         self.player.seek(seconds, reference="absolute", precision="exact")
