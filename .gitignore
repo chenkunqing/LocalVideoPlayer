@@ -25,6 +25,9 @@ data/
 *.swp
 *.swo
 
+# 大型二进制依赖
+*.dll
+
 # 系统文件
 Thumbs.db
 Desktop.ini
