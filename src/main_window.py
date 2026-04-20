@@ -104,12 +104,8 @@ class MainWindow(QWidget):
         self._hide_timer.timeout.connect(self._on_hide_timer)
         self._hide_timer.start(CONTROLS_HIDE_DELAY_MS)
 
-        # 窗口大小调整边距（无边框窗口手动实现）
-        self._resize_margin = 6
-        self._resizing = False
-        self._resize_edge = None
-        self._resize_start_pos = None
-        self._resize_start_geo = None
+        # 窗口大小调整边距（无边框窗口，委托系统原生调整）
+        self._resize_margin = 8
 
     def _connect_signals(self):
         mpv = self.mpv_widget
@@ -254,23 +250,19 @@ class MainWindow(QWidget):
             self.controls_overlay.show_controls()
             self._hide_timer.start(CONTROLS_HIDE_DELAY_MS)
 
-        # 无边框窗口大小调整
+        # 无边框窗口：悬停时更新光标
         if not self._is_fullscreen and not self.isMaximized():
-            if self._resizing:
-                self._do_resize(event.globalPosition().toPoint())
-            else:
-                self._update_resize_cursor(event.position().toPoint())
+            self._update_resize_cursor(event.position().toPoint())
         super().mouseMoveEvent(event)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
             edge = self._get_resize_edge(event.position().toPoint())
             if edge and not self._is_fullscreen and not self.isMaximized():
-                self._resizing = True
-                self._resize_edge = edge
-                self._resize_start_pos = event.globalPosition().toPoint()
-                self._resize_start_geo = self.geometry()
-                return
+                qt_edges = self._to_qt_edges(edge)
+                if qt_edges and self.windowHandle():
+                    self.windowHandle().startSystemResize(qt_edges)
+                    return
         # 点击视频区域 → 播放/暂停（仅播放器可见时）
         if self._view_stack.currentIndex() == 1:
             pos = event.position()
@@ -290,8 +282,6 @@ class MainWindow(QWidget):
         super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
-        self._resizing = False
-        self._resize_edge = None
         super().mouseReleaseEvent(event)
 
     def _get_resize_edge(self, pos):
@@ -323,28 +313,19 @@ class MainWindow(QWidget):
         if edge and edge in cursors:
             self.setCursor(cursors[edge])
 
-    def _do_resize(self, global_pos):
-        if not self._resize_edge or not self._resize_start_geo:
-            return
-        dx = global_pos.x() - self._resize_start_pos.x()
-        dy = global_pos.y() - self._resize_start_pos.y()
-        geo = self._resize_start_geo
-        x, y, w, h = geo.x(), geo.y(), geo.width(), geo.height()
+    _EDGE_MAP = {
+        "left": Qt.Edge.LeftEdge,
+        "right": Qt.Edge.RightEdge,
+        "top": Qt.Edge.TopEdge,
+        "bottom": Qt.Edge.BottomEdge,
+    }
 
-        if "right" in self._resize_edge:
-            w = max(self.minimumWidth(), geo.width() + dx)
-        if "bottom" in self._resize_edge:
-            h = max(self.minimumHeight(), geo.height() + dy)
-        if "left" in self._resize_edge:
-            new_w = max(self.minimumWidth(), geo.width() - dx)
-            x = geo.x() + geo.width() - new_w
-            w = new_w
-        if "top" in self._resize_edge:
-            new_h = max(self.minimumHeight(), geo.height() - dy)
-            y = geo.y() + geo.height() - new_h
-            h = new_h
-
-        self.setGeometry(x, y, w, h)
+    def _to_qt_edges(self, edge_str: str) -> Qt.Edges:
+        result = Qt.Edge(0)
+        for part in edge_str.split("_"):
+            if part in self._EDGE_MAP:
+                result |= self._EDGE_MAP[part]
+        return result
 
     # region 拖拽文件
 

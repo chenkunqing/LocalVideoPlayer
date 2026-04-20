@@ -91,7 +91,7 @@ class TitleBar(QWidget):
         layout.addSpacing(8)
 
         # 标题
-        self._title = QLabel("PUREVIEW PLAYER 2026")
+        self._title = QLabel("KK Player")
         self._title.setStyleSheet(f"""
             color: {COLOR_TEXT_DIM};
             font-size: 10px;
