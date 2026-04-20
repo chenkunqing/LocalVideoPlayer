@@ -819,6 +819,9 @@ class PlaylistView(QWidget):
         if videos:
             self.play_video_requested.emit(videos[0].path)
 
+    def _on_playlist_delete(self, playlist_id: str):
+        self._library.delete_playlist(playlist_id)
+
     def _refresh_recent(self):
         recent = self._library.recent
         items = [
