@@ -49,10 +49,11 @@ class _VideoRow(QWidget):
             p.setPen(Qt.PenStyle.NoPen)
             p.drawRoundedRect(0, 0, w, h, 8, 8)
 
-        # 列宽比例: 50 | flex | flex | 100
+        # 列宽比例: 50 | 52(thumb) | flex | flex | 100
         col1_w = 50
+        thumb_w = 52
         col4_w = 100
-        remaining = w - col1_w - col4_w - 32
+        remaining = w - col1_w - thumb_w - col4_w - 32
         col2_w = remaining * 0.6
         col3_w = remaining * 0.4
         x_offset = 16
@@ -151,8 +152,9 @@ class _ListHeader(QWidget):
         w, h = self.width(), self.height()
 
         col1_w = 50
+        thumb_w = 52
         col4_w = 100
-        remaining = w - col1_w - col4_w - 32
+        remaining = w - col1_w - thumb_w - col4_w - 32
         col2_w = remaining * 0.6
         col3_w = remaining * 0.4
         x_offset = 16
@@ -165,8 +167,8 @@ class _ListHeader(QWidget):
 
         p.drawText(x_offset, 0, col1_w, h, Qt.AlignmentFlag.AlignVCenter, "#")
         x_offset += col1_w
-        p.drawText(x_offset, 0, int(col2_w), h, Qt.AlignmentFlag.AlignVCenter, "标题")
-        x_offset += int(col2_w)
+        p.drawText(x_offset, 0, int(thumb_w + col2_w), h, Qt.AlignmentFlag.AlignVCenter, "标题")
+        x_offset += thumb_w + int(col2_w)
         p.drawText(x_offset, 0, int(col3_w), h, Qt.AlignmentFlag.AlignVCenter, "文件夹")
         x_offset += int(col3_w)
         p.drawText(x_offset, 0, col4_w, h,
