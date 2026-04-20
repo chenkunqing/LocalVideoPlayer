@@ -141,6 +141,7 @@ class MainWindow(QWidget):
 
     def show_library(self):
         """切换到库视图"""
+        self.mpv_widget.set_pause(True)
         self._view_stack.setCurrentIndex(0)
         self.title_bar.set_mode("library")
 
