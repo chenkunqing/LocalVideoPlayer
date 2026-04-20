@@ -2,9 +2,21 @@
 # KK Player PyInstaller 打包配置
 
 import os
+import subprocess
 
 block_cipher = None
 project_root = SPECPATH
+
+# 构建时将 git commit 写入 VERSION 文件供打包后读取
+try:
+    _commit = subprocess.check_output(
+        ["git", "rev-parse", "--short", "HEAD"],
+        cwd=project_root, text=True,
+    ).strip()
+except Exception:
+    _commit = "unknown"
+with open(os.path.join(project_root, "src", "VERSION"), "w", encoding="utf-8") as _f:
+    _f.write(_commit)
 
 a = Analysis(
     [os.path.join(project_root, 'src', 'main.py')],

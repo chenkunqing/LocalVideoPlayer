@@ -14,6 +14,7 @@ from constants import (
     COLOR_TEXT, COLOR_TEXT_DIM, COLOR_TEXT_DARK, COLOR_PROGRESS_BG,
     SIDEBAR_WIDTH,
 )
+from version import get_version
 
 
 class _NavItem(QWidget):
@@ -288,6 +289,18 @@ class PlaylistSidebar(QWidget):
         self._nav_items["shortcuts"] = shortcuts_item
 
         nav_layout.addStretch()
+
+        # 版本号
+        version_label = QLabel(f"v {get_version()}")
+        version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        version_label.setStyleSheet(f"""
+            color: {COLOR_TEXT_DARK};
+            font-size: 10px;
+            padding: 12px;
+            background: transparent;
+        """)
+        nav_layout.addWidget(version_label)
+
         scroll.setWidget(scroll_content)
         layout.addWidget(scroll, 1)
 
