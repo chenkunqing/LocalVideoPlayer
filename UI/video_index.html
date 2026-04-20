@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PureView - 视频库</title>
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.3.4.3.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.1.0.7.js"></script>
+<style>
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+    .drag-region { -webkit-app-region: drag; }
+    .duration-badge {
+        background: rgba(0,0,0,0.75);
+        backdrop-filter: blur(4px);
+    }
+</style>
+</head>
+<body class="bg-[#09090b] text-zinc-100 font-sans select-none h-screen flex flex-col overflow-hidden">
+
+<!-- 顶部标题栏 -->
+<div class="h-8 bg-[#121214] flex justify-between items-center px-4 border-b border-zinc-800/50 z-50">
+    <div class="flex items-center gap-2">
+        <iconify-icon class="text-violet-500 text-lg" icon="ph:film-reel-fill"></iconify-icon>
+        <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-tighter">PureView Player 2026</span>
+    </div>
+    <div class="flex items-center gap-4 h-full">
+        <div class="relative cursor-pointer hover:bg-zinc-800 px-2 h-full flex items-center group" id="trayIcon">
+            <iconify-icon class="text-zinc-500" icon="ph:caret-up-bold"></iconify-icon>
+            <div class="hidden absolute top-8 right-0 w-48 bg-zinc-900 border border-zinc-800 rounded shadow-2xl py-1 text-xs z-50" id="trayMenu">
+                <div class="px-3 py-2 border-b border-zinc-800 text-zinc-400">PureView 正在运行</div>
+                <button class="w-full text-left px-3 py-2 hover:bg-zinc-800">显示主界面</button>
+                <button class="w-full text-left px-3 py-2 hover:bg-zinc-800">最近播放</button>
+                <button class="w-full text-left px-3 py-2 hover:bg-red-900/20 text-red-500">退出</button>
+            </div>
+        </div>
+        <div class="flex h-full">
+            <div class="px-3 hover:bg-zinc-800 flex items-center cursor-pointer"><iconify-icon icon="ph:minus"></iconify-icon></div>
+            <div class="px-3 hover:bg-zinc-800 flex items-center cursor-pointer"><iconify-icon class="text-xs" icon="ph:square"></iconify-icon></div>
+            <div class="px-3 hover:bg-red-600 flex items-center cursor-pointer"><iconify-icon icon="ph:x"></iconify-icon></div>
+        </div>
+    </div>
+</div>
+
+<div class="flex-1 flex overflow-hidden">
+    <!-- 侧边栏 -->
+    <aside class="w-60 bg-[#121214] border-r border-zinc-800/50 flex flex-col">
+        <div class="p-6">
+            <div class="relative">
+                <iconify-icon class="absolute left-3 top-2.5 text-zinc-500" icon="ph:magnifying-glass"></iconify-icon>
+                <input class="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg py-2 pl-10 pr-4 text-xs focus:border-violet-500 outline-none transition-colors" placeholder="搜索视频..." type="text"/>
+            </div>
+        </div>
+        <nav class="flex-1 px-3 space-y-6 overflow-y-auto">
+            <div>
+                <h3 class="px-3 text-[10px] uppercase font-bold text-zinc-600 mb-2">视频库</h3>
+                <div class="space-y-1">
+                    <a class="flex items-center gap-3 px-3 py-2 rounded bg-violet-600 text-white text-sm" href="video_index.html">
+                        <iconify-icon icon="ph:video-bold"></iconify-icon><span>全部视频</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded text-zinc-400 hover:bg-zinc-800 text-sm" href="#">
+                        <iconify-icon icon="ph:clock-bold"></iconify-icon><span>最近播放</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded text-zinc-400 hover:bg-zinc-800 text-sm" href="#">
+                        <iconify-icon icon="ph:folder-open-bold"></iconify-icon><span>文件夹</span>
+                    </a>
+                </div>
+            </div>
+            <div>
+                <h3 class="px-3 text-[10px] uppercase font-bold text-zinc-600 mb-2">分类</h3>
+                <div class="space-y-1">
+                    <a class="flex items-center gap-3 px-3 py-2 rounded text-zinc-400 hover:bg-zinc-800 text-sm" href="#">
+                        <iconify-icon icon="ph:film-slate-bold"></iconify-icon><span>电影</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded text-zinc-400 hover:bg-zinc-800 text-sm" href="#">
+                        <iconify-icon icon="ph:television-bold"></iconify-icon><span>剧集</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded text-zinc-400 hover:bg-zinc-800 text-sm" href="#">
+                        <iconify-icon icon="ph:monitor-play-bold"></iconify-icon><span>动漫</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded text-zinc-400 hover:bg-zinc-800 text-sm" href="#">
+                        <iconify-icon icon="ph:graduation-cap-bold"></iconify-icon><span>教程</span>
+                    </a>
+                </div>
+            </div>
+            <div>
+                <h3 class="px-3 text-[10px] uppercase font-bold text-zinc-600 mb-2">最近观看</h3>
+                <div class="px-3 space-y-3">
+                    <div class="flex items-center gap-2 group cursor-pointer">
+                        <div class="w-12 h-8 rounded bg-zinc-800 overflow-hidden flex-shrink-0">
+                            <img alt="" class="w-full h-full object-cover" src="https://modao.cc/agent-py/media/generated_images/2026-04-19/d20cb51d2e3e465bab1e8f63d4e5c026.jpg"/>
+                        </div>
+                        <div class="overflow-hidden"><p class="text-xs truncate">星际穿越 2014</p></div>
+                    </div>
+                    <div class="flex items-center gap-2 group cursor-pointer">
+                        <div class="w-12 h-8 rounded bg-zinc-800 flex-shrink-0"></div>
+                        <div class="overflow-hidden"><p class="text-xs truncate">Vue 3 教程 EP.05</p></div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- 主内容 -->
+    <main class="flex-1 flex flex-col overflow-y-auto bg-gradient-to-b from-zinc-900 to-[#09090b]">
+        <div class="p-8">
+            <header class="mb-10 flex justify-between items-end">
+                <div>
+                    <h1 class="text-4xl font-black mb-2">本地视频库</h1>
+                    <p class="text-zinc-500 text-sm">共 86 个视频 · 最后扫描于 2026-04-19</p>
+                </div>
+                <div class="flex gap-3 items-center">
+                    <button class="bg-zinc-800 text-white px-4 py-2 rounded-full font-bold text-sm hover:bg-zinc-700 flex items-center gap-2 transition-colors" id="addFolderBtn">
+                        <iconify-icon icon="ph:folder-plus-bold"></iconify-icon>
+                        添加文件夹
+                    </button>
+                    <div class="flex bg-zinc-800 rounded-lg overflow-hidden border border-zinc-700/50">
+                        <button class="px-3 py-2 bg-violet-600 text-white" id="gridViewBtn">
+                            <iconify-icon icon="ph:squares-four-bold"></iconify-icon>
+                        </button>
+                        <button class="px-3 py-2 text-zinc-400 hover:bg-zinc-700" id="listViewBtn">
+                            <iconify-icon icon="ph:list-bold"></iconify-icon>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 继续观看 -->
+            <section class="mb-10">
+                <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <iconify-icon class="text-violet-500" icon="ph:play-circle-bold"></iconify-icon>
+                    继续观看
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <a class="group cursor-pointer" href="video_player.html">
+                        <div class="aspect-video bg-zinc-800 rounded-xl overflow-hidden mb-2 relative">
+                            <img alt="" class="w-full h-full object-cover" src="https://modao.cc/agent-py/media/generated_images/2026-04-19/508b781adb0742b885d2a3c2c694ab98.jpg"/>
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <iconify-icon class="text-4xl text-white drop-shadow-lg" icon="ph:play-fill"></iconify-icon>
+                            </div>
+                            <span class="absolute bottom-2 right-2 duration-badge px-1.5 py-0.5 rounded text-[10px] font-mono text-white">1:23:45</span>
+                            <div class="absolute bottom-0 left-0 w-full h-1 bg-zinc-900/80">
+                                <div class="h-full bg-violet-500 w-[65%]"></div>
+                            </div>
+                        </div>
+                        <p class="text-sm font-bold truncate group-hover:text-violet-400 transition-colors">星际穿越 Interstellar (2014)</p>
+                        <p class="text-[10px] text-zinc-500">已观看 65% · 2小时前</p>
+                    </a>
+                    <div class="group cursor-pointer">
+                        <div class="aspect-video bg-zinc-800 rounded-xl overflow-hidden mb-2 relative">
+                            <img alt="" class="w-full h-full object-cover" src="https://modao.cc/agent-py/media/generated_images/2026-04-19/fec71234078742aa843d38f09724db28.jpg"/>
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <iconify-icon class="text-4xl text-white drop-shadow-lg" icon="ph:play-fill"></iconify-icon>
+                            </div>
+                            <span class="absolute bottom-2 right-2 duration-badge px-1.5 py-0.5 rounded text-[10px] font-mono text-white">45:12</span>
+                            <div class="absolute bottom-0 left-0 w-full h-1 bg-zinc-900/80">
+                                <div class="h-full bg-violet-500 w-[30%]"></div>
+                            </div>
+                        </div>
+                        <p class="text-sm font-bold truncate group-hover:text-violet-400 transition-colors">Vue 3 完整教程 EP.05 - 组合式 API</p>
+                        <p class="text-[10px] text-zinc-500">已观看 30% · 昨天</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 全部视频 - 网格视图 -->
+            <section>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold flex items-center gap-2">
+                        <iconify-icon class="text-violet-500" icon="ph:video-bold"></iconify-icon>
+                        全部视频
+                    </h2>
+                    <div class="flex items-center gap-3">
+                        <select class="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-violet-500">
+                            <option>按添加时间</option>
+                            <option>按名称</option>
+                            <option>按文件大小</option>
+                            <option>按时长</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="videoGrid">
+                    <!-- 视频卡片 1 -->
+                    <a class="group cursor-pointer" href="video_player.html">
+                        <div class="aspect-video bg-zinc-800 rounded-xl overflow-hidden mb-2 relative">
+                            <img alt="" class="w-full h-full object-cover" src="https://modao.cc/agent-py/media/generated_images/2026-04-19/d20cb51d2e3e465bab1e8f63d4e5c026.jpg"/>
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <iconify-icon class="text-4xl text-white drop-shadow-lg" icon="ph:play-fill"></iconify-icon>
+                            </div>
+                            <span class="absolute bottom-2 right-2 duration-badge px-1.5 py-0.5 rounded text-[10px] font-mono text-white">2:49:00</span>
+                            <span class="absolute top-2 left-2 duration-badge px-1.5 py-0.5 rounded text-[10px] font-bold text-violet-400">4K</span>
+                        </div>
+                        <p class="text-sm font-bold truncate group-hover:text-violet-400 transition-colors">星际穿越 Interstellar (2014)</p>
+                        <p class="text-[10px] text-zinc-500">8.2 GB · MKV · 2026-04-18 添加</p>
+                    </a>
+                    <!-- 视频卡片 2 -->
+                    <div class="group cursor-pointer">
+                        <div class="aspect-video bg-zinc-800 rounded-xl overflow-hidden mb-2 relative">
+                            <img alt="" class="w-full h-full object-cover" src="https://modao.cc/agent-py/media/generated_images/2026-04-19/4c637935a34c43e39b3f02b69aa01ed1.jpg"/>
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <iconify-icon class="text-4xl text-white drop-shadow-lg" icon="ph:play-fill"></iconify-icon>
+                            </div>
+                            <span class="absolute bottom-2 right-2 duration-badge px-1.5 py-0.5 rounded text-[10px] font-mono text-white">2:32:15</span>
+                            <span class="absolute top-2 left-2 duration-badge px-1.5 py-0.5 rounded text-[10px] font-bold text-violet-400">1080P</span>
+                        </div>
+                        <p class="text-sm font-bold truncate group-hover:text-violet-400 transition-colors">银翼杀手 2049 (2017)</p>
+                        <p class="text-[10px] text-zinc-500">4.1 GB · MP4 · 2026-04-15 添加</p>
+                    </div>
+                    <!-- 视频卡片 3 -->
+                    <div class="group cursor-pointer">
+                        <div class="aspect-video bg-zinc-800 rounded-xl overflow-hidden mb-2 relative">
+                            <img alt="" class="w-full h-full object-cover" src="https://modao.cc/agent-py/media/generated_images/2026-04-19/fd8740d809d4441a8d0f89190ec4a7f3.jpg"/>
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <iconify-icon class="text-4xl text-white drop-shadow-lg" icon="ph:play-fill"></iconify-icon>
+                            </div>
+                            <span class="absolute bottom-2 right-2 duration-badge px-1.5 py-0.5 rounded text-[10px] font-mono text-white">1:55:22</span>
+                        </div>
+                        <p class="text-sm font-bold truncate group-hover:text-violet-400 transition-colors">攻壳机动队 Ghost in the Shell (1995)</p>
+                        <p class="text-[10px] text-zinc-500">1.8 GB · MKV · 2026-04-12 添加</p>
+                    </div>
+                    <!-- 视频卡片 4 -->
+                    <div class="group cursor-pointer">
+                        <div class="aspect-video bg-zinc-800 rounded-xl overflow-hidden mb-2 relative">
+                            <div class="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center">
+                                <iconify-icon class="text-5xl text-zinc-700" icon="ph:film-strip"></iconify-icon>
+                            </div>
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <iconify-icon class="text-4xl text-white drop-shadow-lg" icon="ph:play-fill"></iconify-icon>
+                            </div>
+                            <span class="absolute bottom-2 right-2 duration-badge px-1.5 py-0.5 rounded text-[10px] font-mono text-white">45:12</span>
+                        </div>
+                        <p class="text-sm font-bold truncate group-hover:text-violet-400 transition-colors">Vue 3 完整教程 EP.05 - 组合式 API</p>
+                        <p class="text-[10px] text-zinc-500">320 MB · MP4 · 2026-04-10 添加</p>
+                    </div>
+                    <!-- 视频卡片 5 -->
+                    <div class="group cursor-pointer">
+                        <div class="aspect-video bg-zinc-800 rounded-xl overflow-hidden mb-2 relative">
+                            <div class="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center">
+                                <iconify-icon class="text-5xl text-zinc-700" icon="ph:film-strip"></iconify-icon>
+                            </div>
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <iconify-icon class="text-4xl text-white drop-shadow-lg" icon="ph:play-fill"></iconify-icon>
+                            </div>
+                            <span class="absolute bottom-2 right-2 duration-badge px-1.5 py-0.5 rounded text-[10px] font-mono text-white">23:08</span>
+                        </div>
+                        <p class="text-sm font-bold truncate group-hover:text-violet-400 transition-colors">黑镜 S06E01 - Joan Is Awful</p>
+                        <p class="text-[10px] text-zinc-500">580 MB · MKV · 2026-04-08 添加</p>
+                    </div>
+                    <!-- 视频卡片 6 -->
+                    <div class="group cursor-pointer">
+                        <div class="aspect-video bg-zinc-800 rounded-xl overflow-hidden mb-2 relative">
+                            <div class="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center">
+                                <iconify-icon class="text-5xl text-zinc-700" icon="ph:film-strip"></iconify-icon>
+                            </div>
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <iconify-icon class="text-4xl text-white drop-shadow-lg" icon="ph:play-fill"></iconify-icon>
+                            </div>
+                            <span class="absolute bottom-2 right-2 duration-badge px-1.5 py-0.5 rounded text-[10px] font-mono text-white">1:28:33</span>
+                        </div>
+                        <p class="text-sm font-bold truncate group-hover:text-violet-400 transition-colors">你的名字 君の名は (2016)</p>
+                        <p class="text-[10px] text-zinc-500">2.3 GB · MKV · 2026-04-05 添加</p>
+                    </div>
+                    <!-- 视频卡片 7 -->
+                    <div class="group cursor-pointer">
+                        <div class="aspect-video bg-zinc-800 rounded-xl overflow-hidden mb-2 relative">
+                            <div class="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center">
+                                <iconify-icon class="text-5xl text-zinc-700" icon="ph:film-strip"></iconify-icon>
+                            </div>
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <iconify-icon class="text-4xl text-white drop-shadow-lg" icon="ph:play-fill"></iconify-icon>
+                            </div>
+                            <span class="absolute bottom-2 right-2 duration-badge px-1.5 py-0.5 rounded text-[10px] font-mono text-white">12:34</span>
+                        </div>
+                        <p class="text-sm font-bold truncate group-hover:text-violet-400 transition-colors">Blender 建模基础入门 #01</p>
+                        <p class="text-[10px] text-zinc-500">210 MB · MP4 · 2026-03-28 添加</p>
+                    </div>
+                    <!-- 视频卡片 8 -->
+                    <div class="group cursor-pointer">
+                        <div class="aspect-video bg-zinc-800 rounded-xl overflow-hidden mb-2 relative">
+                            <div class="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center">
+                                <iconify-icon class="text-5xl text-zinc-700" icon="ph:film-strip"></iconify-icon>
+                            </div>
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <iconify-icon class="text-4xl text-white drop-shadow-lg" icon="ph:play-fill"></iconify-icon>
+                            </div>
+                            <span class="absolute bottom-2 right-2 duration-badge px-1.5 py-0.5 rounded text-[10px] font-mono text-white">2:22:00</span>
+                            <span class="absolute top-2 left-2 duration-badge px-1.5 py-0.5 rounded text-[10px] font-bold text-violet-400">4K HDR</span>
+                        </div>
+                        <p class="text-sm font-bold truncate group-hover:text-violet-400 transition-colors">沙丘 Dune: Part Two (2024)</p>
+                        <p class="text-[10px] text-zinc-500">12.6 GB · MKV · 2026-03-20 添加</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<!-- 底部状态栏 -->
+<footer class="h-10 bg-[#121214] border-t border-zinc-800 flex items-center justify-between px-6 text-[10px] text-zinc-500">
+    <div class="flex items-center gap-4">
+        <span class="flex items-center gap-1">
+            <iconify-icon icon="ph:hard-drives-bold"></iconify-icon>
+            已扫描 3 个文件夹
+        </span>
+        <span class="flex items-center gap-1">
+            <iconify-icon icon="ph:video-bold"></iconify-icon>
+            86 个视频 · 128.4 GB
+        </span>
+    </div>
+    <div class="flex items-center gap-4">
+        <span class="flex items-center gap-1">
+            <iconify-icon class="text-emerald-500" icon="ph:check-circle-bold"></iconify-icon>
+            索引已更新
+        </span>
+    </div>
+</footer>
+
+<script>
+    const tray = document.getElementById('trayIcon');
+    const menu = document.getElementById('trayMenu');
+    tray.addEventListener('click', (e) => {
+        e.stopPropagation();
+        menu.classList.toggle('hidden');
+    });
+    document.addEventListener('click', () => menu.classList.add('hidden'));
+</script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PureTune - 文件夹视图</title>
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.3.4.3.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.1.0.7.js"></script>
+<style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-[#09090b] text-zinc-100 font-sans select-none h-screen flex flex-col overflow-hidden">
+<!-- 标题栏略 -->
+<div class="h-8 bg-[#121214] flex justify-between items-center px-4 border-b border-zinc-800/50">
+<div class="flex items-center gap-2">
+<iconify-icon class="text-blue-500 text-lg" icon="ph:music-notes-fill"></iconify-icon>
+<span class="text-[10px] text-zinc-500 font-bold uppercase">PureTune Player 2026</span>
+</div>
+<div class="flex items-center gap-2">
+<a class="px-3 hover:bg-zinc-800 h-8 flex items-center" href="index.html"><iconify-icon icon="ph:house-bold"></iconify-icon></a>
+<div class="px-3 hover:bg-red-600 h-8 flex items-center"><iconify-icon icon="ph:x"></iconify-icon></div>
+</div>
+</div>
+<div class="flex-1 flex overflow-hidden">
+<!-- 侧边栏复用 -->
+<aside class="w-60 bg-[#121214] border-r border-zinc-800/50 flex flex-col">
+<div class="p-6">
+<div class="relative">
+<iconify-icon class="absolute left-3 top-2.5 text-zinc-500" icon="ph:magnifying-glass"></iconify-icon>
+<input class="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg py-2 pl-10 pr-4 text-xs outline-none" placeholder="搜索本地..." type="text"/>
+</div>
+</div>
+<nav class="flex-1 px-3 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-zinc-400 hover:bg-zinc-800 text-sm" href="index.html">
+<iconify-icon icon="ph:music-note-bold"></iconify-icon><span>全部歌曲</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-zinc-400 hover:bg-zinc-800 text-sm" href="playlists.html">
+<iconify-icon icon="ph:list-heart-bold"></iconify-icon><span>播放列表</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded bg-blue-600 text-white text-sm" href="folders.html">
+<iconify-icon icon="ph:folder-open-bold"></iconify-icon><span>文件夹</span>
+</a>
+</nav>
+</aside>
+<main class="flex-1 overflow-y-auto p-8">
+<div class="flex items-center gap-2 text-xs text-zinc-500 mb-6">
+<span>本地音乐</span> <iconify-icon icon="ph:caret-right"></iconify-icon>
+<span>D:\Music</span> <iconify-icon icon="ph:caret-right"></iconify-icon>
+<span class="text-zinc-200">2026_Downloads</span>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+<!-- 文件夹项 -->
+<div class="group cursor-pointer">
+<div class="aspect-square bg-zinc-800 rounded-xl flex items-center justify-center mb-2 group-hover:bg-zinc-700 transition-colors">
+<iconify-icon class="text-6xl text-blue-500" icon="ph:folder-fill"></iconify-icon>
+</div>
+<p class="text-sm font-bold text-center truncate px-2">无损收藏</p>
+<p class="text-[10px] text-zinc-500 text-center">124 Files</p>
+</div>
+<div class="group cursor-pointer">
+<div class="aspect-square bg-zinc-800 rounded-xl flex items-center justify-center mb-2 group-hover:bg-zinc-700">
+<iconify-icon class="text-6xl text-zinc-600" icon="ph:folder-fill"></iconify-icon>
+</div>
+<p class="text-sm font-bold text-center truncate px-2">OST 影视原声</p>
+<p class="text-[10px] text-zinc-500 text-center">45 Files</p>
+</div>
+<div class="group cursor-pointer">
+<div class="aspect-square bg-zinc-800 rounded-xl flex items-center justify-center mb-2 group-hover:bg-zinc-700">
+<iconify-icon class="text-6xl text-zinc-600" icon="ph:folder-fill"></iconify-icon>
+</div>
+<p class="text-sm font-bold text-center truncate px-2">学习用 BGM</p>
+<p class="text-[10px] text-zinc-500 text-center">82 Files</p>
+</div>
+<div class="group cursor-pointer">
+<div class="aspect-square bg-zinc-800 rounded-xl flex items-center justify-center mb-2 group-hover:bg-zinc-700">
+<iconify-icon class="text-6xl text-zinc-600" icon="ph:folder-fill"></iconify-icon>
+</div>
+<p class="text-sm font-bold text-center truncate px-2">古典经典</p>
+<p class="text-[10px] text-zinc-500 text-center">16 Files</p>
+</div>
+<!-- 歌曲项 -->
+<div class="group cursor-pointer">
+<div class="aspect-square bg-zinc-800 rounded-xl overflow-hidden mb-2 group-hover:ring-2 ring-blue-500 transition-all relative">
+<img alt="Music" class="w-full h-full object-cover" src="https://modao.cc/agent-py/media/generated_images/2026-04-19/fd8740d809d4441a8d0f89190ec4a7f3.jpg"/>
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+<iconify-icon class="text-3xl text-white" icon="ph:play-fill"></iconify-icon>
+</div>
+</div>
+<p class="text-sm font-bold text-center truncate px-2">从未停止的旋律.flac</p>
+<p class="text-[10px] text-zinc-500 text-center">18.5 MB</p>
+</div>
+</div>
+</main>
+</div>
+<!-- 底部栏复用略，保持交互一致性 -->
+<footer class="h-20 bg-[#121214] border-t border-zinc-800 flex items-center px-6 gap-6">
+<div class="w-1/4 flex items-center gap-3">
+<div class="w-10 h-10 bg-zinc-800 rounded"></div>
+<div>
+<p class="text-xs font-bold">停止播放</p>
+<p class="text-[9px] text-zinc-500">就绪</p>
+</div>
+</div>
+<div class="flex-1 flex justify-center">
+<div class="flex items-center gap-6 text-zinc-400">
+<iconify-icon class="text-xl" icon="ph:skip-back-fill"></iconify-icon>
+<div class="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center"><iconify-icon icon="ph:play-fill"></iconify-icon></div>
+<iconify-icon class="text-xl" icon="ph:skip-forward-fill"></iconify-icon>
+</div>
+</div>
+<div class="w-1/4"></div>
+</footer>
+</body>
+</html>

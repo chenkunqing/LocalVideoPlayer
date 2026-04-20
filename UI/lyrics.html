@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PureTune - 歌词沉浸模式</title>
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.3.4.3.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.1.0.7.js"></script>
+<style>
+        .lyric-gradient {
+            mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+        }
+        .active-lyric {
+            color: white;
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.4));
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1.05); }
+            50% { transform: translateY(-10px) scale(1.1); }
+        }
+        .animate-cover {
+            animation: float 10s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-[#050505] text-zinc-100 font-sans select-none h-screen overflow-hidden flex flex-col relative">
+<!-- 动态背景 -->
+<div class="absolute inset-0 z-0">
+<div class="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-purple-900/20"></div>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/10 blur-[120px] rounded-full"></div>
+</div>
+<!-- 顶部操作 -->
+<div class="h-16 flex items-center justify-between px-8 relative z-10">
+<a class="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors" href="index.html">
+<iconify-icon icon="ph:caret-down-bold"></iconify-icon>
+<span class="text-xs font-bold uppercase">退出沉浸模式</span>
+</a>
+<div class="flex items-center gap-6">
+<iconify-icon class="text-zinc-400 hover:text-white cursor-pointer" icon="ph:share-network-bold"></iconify-icon>
+<iconify-icon class="text-zinc-400 hover:text-white cursor-pointer" icon="ph:gear-six-bold"></iconify-icon>
+</div>
+</div>
+<!-- 歌词内容 -->
+<main class="flex-1 flex relative z-10 px-20 items-center">
+<div class="w-1/2 flex justify-center">
+<div class="w-[450px] h-[450px] rounded-2xl shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden animate-cover">
+<img alt="Cover" class="w-full h-full object-cover" src="https://modao.cc/agent-py/media/generated_images/2026-04-19/508b781adb0742b885d2a3c2c694ab98.jpg"/>
+</div>
+</div>
+<div class="w-1/2 h-[500px] flex flex-col justify-center overflow-hidden lyric-gradient pl-10">
+<div class="space-y-12">
+<p class="text-2xl text-zinc-600 font-bold transition-all duration-500">冰冷的引擎 划破虚空的寂静</p>
+<p class="text-2xl text-zinc-600 font-bold transition-all duration-500">我看见了 燃烧的猎户座边缘</p>
+<p class="text-4xl text-white font-black active-lyric transition-all duration-500">每一个跳跃 都是对命运的祭奠</p>
+<p class="text-2xl text-zinc-600 font-bold transition-all duration-500">不要温和地走进那个良夜</p>
+<p class="text-2xl text-zinc-600 font-bold transition-all duration-500">暮色沉沉 也要向死而生</p>
+<p class="text-2xl text-zinc-600 font-bold transition-all duration-500">穿越了宇宙 穿越了维度</p>
+</div>
+</div>
+</main>
+<!-- 沉浸式播放控制 -->
+<footer class="h-32 flex flex-col items-center justify-center relative z-10 bg-gradient-to-t from-black/60 to-transparent">
+<div class="w-full max-w-3xl flex flex-col items-center gap-4">
+<div class="flex items-center gap-10">
+<iconify-icon class="text-3xl text-zinc-400 hover:text-white cursor-pointer" icon="ph:skip-back-fill"></iconify-icon>
+<div class="w-14 h-14 bg-white text-black rounded-full flex items-center justify-center hover:scale-110 transition-all cursor-pointer">
+<iconify-icon class="text-3xl" icon="ph:pause-fill"></iconify-icon>
+</div>
+<iconify-icon class="text-3xl text-zinc-400 hover:text-white cursor-pointer" icon="ph:skip-forward-fill"></iconify-icon>
+</div>
+<div class="w-full flex items-center gap-4 text-[10px] text-zinc-500 font-mono">
+<span>02:10</span>
+<div class="flex-1 h-1 bg-zinc-800/50 rounded-full">
+<div class="h-full bg-blue-500 w-[45%]"></div>
+</div>
+<span>04:32</span>
+</div>
+</div>
+</footer>
+</body>
+</html>

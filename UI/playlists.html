@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PureTune - 播放列表</title>
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.3.4.3.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.1.0.7.js"></script>
+<style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-[#09090b] text-zinc-100 font-sans select-none h-screen flex flex-col overflow-hidden">
+<!-- 顶部标题栏 -->
+<div class="h-8 bg-[#121214] flex justify-between items-center px-4 border-b border-zinc-800/50">
+<div class="flex items-center gap-2">
+<iconify-icon class="text-blue-500 text-lg" icon="ph:music-notes-fill"></iconify-icon>
+<span class="text-[10px] text-zinc-500 font-bold uppercase tracking-tighter">PureTune Player 2026</span>
+</div>
+<div class="flex items-center gap-4 h-full">
+<a class="px-3 hover:bg-zinc-800 h-8 flex items-center text-zinc-400" href="index.html"><iconify-icon icon="ph:house-bold"></iconify-icon></a>
+<div class="px-3 hover:bg-red-600 h-8 flex items-center"><iconify-icon icon="ph:x"></iconify-icon></div>
+</div>
+</div>
+<div class="flex-1 flex overflow-hidden">
+<!-- 侧边栏 -->
+<aside class="w-60 bg-[#121214] border-r border-zinc-800/50 flex flex-col">
+<div class="p-6">
+<button class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all">
+<iconify-icon icon="ph:plus-bold"></iconify-icon> 创建新列表
+                </button>
+</div>
+<nav class="flex-1 px-3 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-zinc-400 hover:bg-zinc-800 text-sm" href="index.html">
+<iconify-icon icon="ph:music-note-bold"></iconify-icon><span>全部歌曲</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded bg-blue-600 text-white text-sm" href="playlists.html">
+<iconify-icon icon="ph:list-heart-bold"></iconify-icon><span>播放列表</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-zinc-400 hover:bg-zinc-800 text-sm" href="folders.html">
+<iconify-icon icon="ph:folder-open-bold"></iconify-icon><span>文件夹</span>
+</a>
+</nav>
+</aside>
+<!-- 主内容 -->
+<main class="flex-1 overflow-y-auto bg-gradient-to-b from-zinc-900 to-[#09090b] p-8">
+<h2 class="text-3xl font-black mb-8 flex items-center gap-3">
+<iconify-icon class="text-blue-500" icon="ph:bookmarks-fill"></iconify-icon>
+                我的收藏夹
+            </h2>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- 列表卡片 1 -->
+<div class="bg-zinc-800/40 border border-zinc-800 p-5 rounded-2xl hover:bg-zinc-800/60 transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-4">
+<div class="w-16 h-16 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+<iconify-icon class="text-3xl text-white" icon="ph:heart-fill"></iconify-icon>
+</div>
+<button class="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-xl">
+<iconify-icon class="text-xl" icon="ph:play-fill"></iconify-icon>
+</button>
+</div>
+<h3 class="text-lg font-bold mb-1">我喜欢的音乐</h3>
+<p class="text-xs text-zinc-500 mb-4">432 首歌曲 · 最近更新 2小时前</p>
+<div class="flex items-center gap-2">
+<span class="px-2 py-1 bg-zinc-800 rounded text-[9px] text-zinc-400 uppercase font-bold tracking-wider">默认列表</span>
+<span class="px-2 py-1 bg-zinc-800 rounded text-[9px] text-zinc-400 uppercase font-bold tracking-wider">私密</span>
+</div>
+</div>
+<!-- 列表卡片 2 -->
+<div class="bg-zinc-800/40 border border-zinc-800 p-5 rounded-2xl hover:bg-zinc-800/60 transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-4">
+<div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg overflow-hidden relative">
+<img alt="Cover" class="w-full h-full object-cover" src="https://modao.cc/agent-py/media/generated_images/2026-04-19/4c637935a34c43e39b3f02b69aa01ed1.jpg"/>
+</div>
+<button class="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-xl">
+<iconify-icon class="text-xl" icon="ph:play-fill"></iconify-icon>
+</button>
+</div>
+<h3 class="text-lg font-bold mb-1">2026 必听精选</h3>
+<p class="text-xs text-zinc-500 mb-4">12 首歌曲 · 最近更新 2026-04-19</p>
+<div class="flex items-center gap-2">
+<span class="px-2 py-1 bg-zinc-800 rounded text-[9px] text-zinc-400 uppercase font-bold tracking-wider">精选</span>
+</div>
+</div>
+<!-- 列表卡片 3 -->
+<div class="bg-zinc-800/40 border border-zinc-800 p-5 rounded-2xl hover:bg-zinc-800/60 transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-4">
+<div class="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+<iconify-icon class="text-3xl text-white" icon="ph:leaf-fill"></iconify-icon>
+</div>
+<button class="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-xl">
+<iconify-icon class="text-xl" icon="ph:play-fill"></iconify-icon>
+</button>
+</div>
+<h3 class="text-lg font-bold mb-1">雨夜工作专用</h3>
+<p class="text-xs text-zinc-500 mb-4">85 首歌曲 · 最近更新 2026-04-15</p>
+<div class="flex items-center gap-2">
+<span class="px-2 py-1 bg-zinc-800 rounded text-[9px] text-zinc-400 uppercase font-bold tracking-wider">Lofi</span>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- 底部播放栏复用 -->
+<footer class="h-20 bg-[#121214] border-t border-zinc-800 flex items-center px-6 gap-6 relative">
+<div class="absolute top-0 left-0 w-full h-1 bg-zinc-800">
+<div class="h-full bg-blue-500 w-[45%]"></div>
+</div>
+<div class="w-1/4 flex items-center gap-3">
+<div class="w-12 h-12 bg-zinc-800 rounded overflow-hidden">
+<img alt="Cover" class="w-full h-full object-cover" src="https://modao.cc/agent-py/media/generated_images/2026-04-19/4c637935a34c43e39b3f02b69aa01ed1.jpg"/>
+</div>
+<div class="overflow-hidden">
+<p class="text-sm font-bold truncate">夜航星 (Night Voyage)</p>
+<p class="text-[10px] text-zinc-500">张三</p>
+</div>
+</div>
+<div class="flex-1 flex flex-col items-center gap-1">
+<div class="flex items-center gap-6">
+<iconify-icon class="text-zinc-500 hover:text-white cursor-pointer" icon="ph:shuffle"></iconify-icon>
+<iconify-icon class="text-xl" icon="ph:skip-back-fill"></iconify-icon>
+<div class="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center cursor-pointer">
+<iconify-icon class="text-xl" icon="ph:pause-fill"></iconify-icon>
+</div>
+<iconify-icon class="text-xl" icon="ph:skip-forward-fill"></iconify-icon>
+<iconify-icon class="text-blue-500" icon="ph:repeat"></iconify-icon>
+</div>
+<div class="w-full max-w-md flex items-center gap-2 text-[9px] text-zinc-500 font-mono">
+<span>02:10</span><div class="flex-1 h-1 bg-zinc-800 rounded-full"></div><span>04:32</span>
+</div>
+</div>
+<div class="w-1/4"></div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PureView - 正在播放</title>
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.3.4.3.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.1.0.7.js"></script>
+<style>
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+
+    .controls-bar {
+        background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 60%, transparent 100%);
+    }
+    .top-bar {
+        background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
+    }
+
+    .player-container:not(:hover) .controls-bar,
+    .player-container:not(:hover) .top-bar {
+        opacity: 0;
+    }
+    .player-container .controls-bar,
+    .player-container .top-bar {
+        transition: opacity 0.3s ease;
+    }
+
+    .progress-bar { height: 4px; transition: height 0.15s ease; }
+    .progress-bar:hover { height: 8px; }
+    .progress-bar .progress-handle {
+        width: 0; height: 0; transition: all 0.15s ease;
+    }
+    .progress-bar:hover .progress-handle {
+        width: 14px; height: 14px;
+    }
+
+    .tooltip {
+        background: rgba(0,0,0,0.85);
+        backdrop-filter: blur(8px);
+    }
+
+    .speed-menu {
+        background: rgba(24,24,27,0.95);
+        backdrop-filter: blur(12px);
+    }
+
+    .subtitle-track {
+        text-shadow: 0 0 8px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.8);
+    }
+</style>
+</head>
+<body class="bg-black text-zinc-100 font-sans select-none h-screen flex flex-col overflow-hidden">
+
+<!-- 顶部标题栏 (最小化) -->
+<div class="h-8 bg-[#121214]/80 flex justify-between items-center px-4 border-b border-zinc-800/30 z-50 backdrop-blur-sm">
+    <div class="flex items-center gap-2">
+        <iconify-icon class="text-violet-500 text-lg" icon="ph:film-reel-fill"></iconify-icon>
+        <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-tighter">PureView Player 2026</span>
+    </div>
+    <div class="flex items-center gap-4 h-full">
+        <a class="px-3 hover:bg-zinc-800 h-8 flex items-center text-zinc-400" href="video_index.html">
+            <iconify-icon icon="ph:house-bold"></iconify-icon>
+        </a>
+        <div class="flex h-full">
+            <div class="px-3 hover:bg-zinc-800 flex items-center cursor-pointer"><iconify-icon icon="ph:minus"></iconify-icon></div>
+            <div class="px-3 hover:bg-zinc-800 flex items-center cursor-pointer"><iconify-icon class="text-xs" icon="ph:square"></iconify-icon></div>
+            <div class="px-3 hover:bg-red-600 flex items-center cursor-pointer"><iconify-icon icon="ph:x"></iconify-icon></div>
+        </div>
+    </div>
+</div>
+
+<div class="flex-1 flex overflow-hidden">
+    <!-- 视频播放区域 -->
+    <div class="flex-1 flex flex-col bg-black relative player-container" id="playerContainer">
+        <!-- 视频区域 -->
+        <div class="flex-1 relative flex items-center justify-center bg-black cursor-pointer" id="videoArea">
+            <img alt="Video Frame" class="max-w-full max-h-full object-contain" src="https://modao.cc/agent-py/media/generated_images/2026-04-19/508b781adb0742b885d2a3c2c694ab98.jpg" style="width:100%; height:100%; object-fit: contain;"/>
+
+            <!-- 字幕层 -->
+            <div class="absolute bottom-24 left-0 w-full text-center px-20">
+                <p class="subtitle-track text-2xl font-bold text-white inline-block px-4 py-1">每一个跳跃 都是对命运的祭奠</p>
+            </div>
+
+            <!-- 中心播放按钮 (暂停时显示) -->
+            <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                <div class="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                    <iconify-icon class="text-5xl text-white" icon="ph:play-fill"></iconify-icon>
+                </div>
+            </div>
+
+            <!-- 顶部信息栏 (hover显示) -->
+            <div class="top-bar absolute top-0 left-0 w-full px-8 pt-4 pb-16">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-black">星际穿越 Interstellar (2014)</h2>
+                        <p class="text-xs text-zinc-400 mt-1">Christopher Nolan · 2h 49m · 4K UHD · MKV</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 底部控制栏 (hover显示) -->
+            <div class="controls-bar absolute bottom-0 left-0 w-full px-6 pb-4 pt-20">
+                <!-- 进度条 -->
+                <div class="progress-bar w-full bg-zinc-700/60 rounded-full cursor-pointer relative mb-4 group" id="progressBar">
+                    <div class="h-full bg-zinc-500/40 rounded-full absolute left-0 top-0" style="width: 70%"></div>
+                    <div class="h-full bg-violet-500 rounded-full relative" style="width: 45%">
+                        <div class="progress-handle absolute -right-[7px] top-1/2 -translate-y-1/2 bg-white rounded-full shadow-lg"></div>
+                    </div>
+                    <!-- 时间预览 tooltip -->
+                    <div class="tooltip absolute -top-10 left-[45%] -translate-x-1/2 px-2 py-1 rounded text-[10px] font-mono text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        1:15:23
+                    </div>
+                </div>
+
+                <!-- 控制按钮 -->
+                <div class="flex items-center justify-between">
+                    <!-- 左侧控制 -->
+                    <div class="flex items-center gap-4">
+                        <button class="w-10 h-10 flex items-center justify-center hover:bg-zinc-800/60 rounded-lg transition-colors" id="playBtn">
+                            <iconify-icon class="text-2xl" icon="ph:pause-fill"></iconify-icon>
+                        </button>
+                        <button class="w-10 h-10 flex items-center justify-center hover:bg-zinc-800/60 rounded-lg transition-colors">
+                            <iconify-icon class="text-xl" icon="ph:skip-back-fill"></iconify-icon>
+                        </button>
+                        <button class="w-10 h-10 flex items-center justify-center hover:bg-zinc-800/60 rounded-lg transition-colors">
+                            <iconify-icon class="text-xl" icon="ph:skip-forward-fill"></iconify-icon>
+                        </button>
+
+                        <!-- 音量控制 -->
+                        <div class="flex items-center gap-2 group/vol">
+                            <button class="w-10 h-10 flex items-center justify-center hover:bg-zinc-800/60 rounded-lg transition-colors">
+                                <iconify-icon class="text-xl" icon="ph:speaker-high-bold"></iconify-icon>
+                            </button>
+                            <div class="w-0 group-hover/vol:w-24 overflow-hidden transition-all duration-300">
+                                <div class="w-24 h-1 bg-zinc-700 rounded-full cursor-pointer">
+                                    <div class="h-full bg-white rounded-full relative" style="width: 70%">
+                                        <div class="w-3 h-3 bg-white rounded-full absolute -right-1.5 top-1/2 -translate-y-1/2 shadow"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 时间 -->
+                        <span class="text-xs font-mono text-zinc-400">
+                            <span class="text-white">1:15:23</span> / 2:49:00
+                        </span>
+                    </div>
+
+                    <!-- 右侧控制 -->
+                    <div class="flex items-center gap-2">
+                        <!-- 字幕 -->
+                        <div class="relative" id="subtitleGroup">
+                            <button class="w-10 h-10 flex items-center justify-center hover:bg-zinc-800/60 rounded-lg transition-colors text-violet-400" id="subtitleBtn">
+                                <iconify-icon class="text-xl" icon="ph:subtitles-bold"></iconify-icon>
+                            </button>
+                            <div class="speed-menu hidden absolute bottom-12 right-0 w-48 rounded-xl border border-zinc-800 py-2 text-xs shadow-2xl" id="subtitleMenu">
+                                <div class="px-3 py-1.5 text-[10px] uppercase font-bold text-zinc-500">字幕轨道</div>
+                                <button class="w-full text-left px-3 py-2 hover:bg-zinc-800 flex items-center justify-between">
+                                    <span>中文简体 (SRT)</span>
+                                    <iconify-icon class="text-violet-500" icon="ph:check-bold"></iconify-icon>
+                                </button>
+                                <button class="w-full text-left px-3 py-2 hover:bg-zinc-800">English (SRT)</button>
+                                <button class="w-full text-left px-3 py-2 hover:bg-zinc-800">日本語 (ASS)</button>
+                                <div class="border-t border-zinc-800 mt-1 pt-1">
+                                    <button class="w-full text-left px-3 py-2 hover:bg-zinc-800 text-zinc-400">关闭字幕</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 倍速 -->
+                        <div class="relative" id="speedGroup">
+                            <button class="h-10 px-3 flex items-center justify-center hover:bg-zinc-800/60 rounded-lg transition-colors text-xs font-bold" id="speedBtn">
+                                1.0x
+                            </button>
+                            <div class="speed-menu hidden absolute bottom-12 right-0 w-32 rounded-xl border border-zinc-800 py-2 text-xs shadow-2xl" id="speedMenu">
+                                <div class="px-3 py-1.5 text-[10px] uppercase font-bold text-zinc-500">播放速度</div>
+                                <button class="w-full text-left px-3 py-2 hover:bg-zinc-800">0.5x</button>
+                                <button class="w-full text-left px-3 py-2 hover:bg-zinc-800">0.75x</button>
+                                <button class="w-full text-left px-3 py-2 hover:bg-zinc-800 flex items-center justify-between">
+                                    <span>1.0x</span>
+                                    <iconify-icon class="text-violet-500" icon="ph:check-bold"></iconify-icon>
+                                </button>
+                                <button class="w-full text-left px-3 py-2 hover:bg-zinc-800">1.25x</button>
+                                <button class="w-full text-left px-3 py-2 hover:bg-zinc-800">1.5x</button>
+                                <button class="w-full text-left px-3 py-2 hover:bg-zinc-800">2.0x</button>
+                            </div>
+                        </div>
+
+                        <!-- 音频轨道 -->
+                        <button class="w-10 h-10 flex items-center justify-center hover:bg-zinc-800/60 rounded-lg transition-colors" title="音频轨道">
+                            <iconify-icon class="text-xl" icon="ph:waveform-bold"></iconify-icon>
+                        </button>
+
+                        <!-- 画中画 -->
+                        <button class="w-10 h-10 flex items-center justify-center hover:bg-zinc-800/60 rounded-lg transition-colors" title="画中画">
+                            <iconify-icon class="text-xl" icon="ph:picture-in-picture-bold"></iconify-icon>
+                        </button>
+
+                        <!-- 侧边栏切换 -->
+                        <button class="w-10 h-10 flex items-center justify-center hover:bg-zinc-800/60 rounded-lg transition-colors" id="sidebarToggle" title="播放信息">
+                            <iconify-icon class="text-xl" icon="ph:sidebar-simple-bold"></iconify-icon>
+                        </button>
+
+                        <!-- 全屏 -->
+                        <button class="w-10 h-10 flex items-center justify-center hover:bg-zinc-800/60 rounded-lg transition-colors" id="fullscreenBtn" title="全屏">
+                            <iconify-icon class="text-xl" icon="ph:corners-out-bold"></iconify-icon>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧信息面板 -->
+    <aside class="w-80 bg-[#121214] border-l border-zinc-800/50 flex flex-col overflow-hidden" id="sidePanel">
+        <!-- 面板 tabs -->
+        <div class="flex border-b border-zinc-800/50">
+            <button class="flex-1 py-3 text-xs font-bold text-violet-400 border-b-2 border-violet-500">信息</button>
+            <button class="flex-1 py-3 text-xs font-bold text-zinc-500 hover:text-zinc-300">播放列表</button>
+        </div>
+
+        <!-- 视频信息 -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+            <!-- 缩略图 -->
+            <div class="aspect-video bg-zinc-800 rounded-xl overflow-hidden">
+                <img alt="" class="w-full h-full object-cover" src="https://modao.cc/agent-py/media/generated_images/2026-04-19/508b781adb0742b885d2a3c2c694ab98.jpg"/>
+            </div>
+
+            <!-- 标题 -->
+            <div>
+                <h3 class="text-lg font-black">星际穿越</h3>
+                <p class="text-xs text-zinc-500 mt-1">Interstellar (2014)</p>
+            </div>
+
+            <!-- 元数据 -->
+            <div class="space-y-3">
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-zinc-500">导演</span>
+                    <span class="text-zinc-200">Christopher Nolan</span>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-zinc-500">时长</span>
+                    <span class="text-zinc-200">2h 49m 00s</span>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-zinc-500">分辨率</span>
+                    <span class="text-zinc-200">3840 x 2160 (4K)</span>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-zinc-500">编码</span>
+                    <span class="text-zinc-200">H.265 / HEVC</span>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-zinc-500">比特率</span>
+                    <span class="text-zinc-200">38.2 Mbps</span>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-zinc-500">帧率</span>
+                    <span class="text-zinc-200">23.976 fps</span>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-zinc-500">音频</span>
+                    <span class="text-zinc-200">DTS-HD MA 5.1</span>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-zinc-500">文件大小</span>
+                    <span class="text-zinc-200">8.2 GB</span>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-zinc-500">格式</span>
+                    <span class="text-zinc-200">MKV (Matroska)</span>
+                </div>
+            </div>
+
+            <!-- 字幕轨道 -->
+            <div>
+                <h4 class="text-xs font-bold text-zinc-400 uppercase mb-2">字幕轨道</h4>
+                <div class="space-y-1">
+                    <div class="flex items-center justify-between px-3 py-2 bg-violet-600/10 border border-violet-500/30 rounded-lg text-xs">
+                        <span class="text-violet-300">中文简体</span>
+                        <span class="text-violet-500 text-[10px]">SRT · 活动中</span>
+                    </div>
+                    <div class="flex items-center justify-between px-3 py-2 bg-zinc-800/40 rounded-lg text-xs text-zinc-400">
+                        <span>English</span>
+                        <span class="text-[10px]">SRT</span>
+                    </div>
+                    <div class="flex items-center justify-between px-3 py-2 bg-zinc-800/40 rounded-lg text-xs text-zinc-400">
+                        <span>日本語</span>
+                        <span class="text-[10px]">ASS</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 文件路径 -->
+            <div>
+                <h4 class="text-xs font-bold text-zinc-400 uppercase mb-2">文件位置</h4>
+                <p class="text-[10px] text-zinc-500 font-mono break-all bg-zinc-900/50 px-3 py-2 rounded-lg">
+                    D:\Movies\Interstellar.2014.2160p.UHD.BluRay.x265.DTS-HD.MA.mkv
+                </p>
+            </div>
+
+            <!-- 快捷操作 -->
+            <div class="flex gap-2">
+                <button class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-xs py-2 rounded-lg font-bold flex items-center justify-center gap-1 transition-colors">
+                    <iconify-icon icon="ph:folder-open-bold"></iconify-icon>
+                    打开目录
+                </button>
+                <button class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-xs py-2 rounded-lg font-bold flex items-center justify-center gap-1 transition-colors">
+                    <iconify-icon icon="ph:info-bold"></iconify-icon>
+                    MediaInfo
+                </button>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<script>
+    // 播放/暂停切换
+    const playBtn = document.getElementById('playBtn');
+    let isPlaying = true;
+    playBtn.addEventListener('click', () => {
+        isPlaying = !isPlaying;
+        playBtn.querySelector('iconify-icon').setAttribute('icon',
+            isPlaying ? 'ph:pause-fill' : 'ph:play-fill'
+        );
+    });
+
+    // 倍速菜单
+    const speedBtn = document.getElementById('speedBtn');
+    const speedMenu = document.getElementById('speedMenu');
+    speedBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        speedMenu.classList.toggle('hidden');
+        subtitleMenu.classList.add('hidden');
+    });
+
+    // 字幕菜单
+    const subtitleBtn = document.getElementById('subtitleBtn');
+    const subtitleMenu = document.getElementById('subtitleMenu');
+    subtitleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        subtitleMenu.classList.toggle('hidden');
+        speedMenu.classList.add('hidden');
+    });
+
+    document.addEventListener('click', () => {
+        speedMenu.classList.add('hidden');
+        subtitleMenu.classList.add('hidden');
+    });
+
+    // 侧边栏切换
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidePanel = document.getElementById('sidePanel');
+    let sidebarVisible = true;
+    sidebarToggle.addEventListener('click', () => {
+        sidebarVisible = !sidebarVisible;
+        sidePanel.style.display = sidebarVisible ? 'flex' : 'none';
+    });
+
+    // 全屏
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    fullscreenBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+    });
+
+    // 键盘快捷键
+    document.addEventListener('keydown', (e) => {
+        switch(e.key) {
+            case ' ':
+            case 'k':
+                e.preventDefault();
+                playBtn.click();
+                break;
+            case 'f':
+                fullscreenBtn.click();
+                break;
+            case 'Escape':
+                if (document.fullscreenElement) document.exitFullscreen();
+                break;
+            case 'm':
+                break;
+        }
+    });
+</script>
+</body>
+</html>

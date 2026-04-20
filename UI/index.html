@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PureTune - 音乐库</title>
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.3.4.3.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.1.0.7.js"></script>
+<style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+        .drag-region { -webkit-app-region: drag; }
+    </style>
+</head>
+<body class="bg-[#09090b] text-zinc-100 font-sans select-none h-screen flex flex-col overflow-hidden">
+<!-- 顶部标题栏 -->
+<div class="h-8 bg-[#121214] flex justify-between items-center px-4 border-b border-zinc-800/50 z-50">
+<div class="flex items-center gap-2">
+<iconify-icon class="text-blue-500 text-lg" icon="ph:music-notes-fill"></iconify-icon>
+<span class="text-[10px] text-zinc-500 font-bold uppercase tracking-tighter">PureTune Player 2026</span>
+</div>
+<div class="flex items-center gap-4 h-full">
+<div class="relative cursor-pointer hover:bg-zinc-800 px-2 h-full flex items-center group" id="trayIcon">
+<iconify-icon class="text-zinc-500" icon="ph:caret-up-bold"></iconify-icon>
+<div class="hidden absolute top-8 right-0 w-48 bg-zinc-900 border border-zinc-800 rounded shadow-2xl py-1 text-xs" id="trayMenu">
+<div class="px-3 py-2 border-b border-zinc-800 text-zinc-400">PureTune 正在运行</div>
+<button class="w-full text-left px-3 py-2 hover:bg-zinc-800">显示主界面</button>
+<button class="w-full text-left px-3 py-2 hover:bg-zinc-800">随机播放</button>
+<button class="w-full text-left px-3 py-2 hover:bg-red-900/20 text-red-500">退出</button>
+</div>
+</div>
+<div class="flex h-full">
+<div class="px-3 hover:bg-zinc-800 flex items-center"><iconify-icon icon="ph:minus"></iconify-icon></div>
+<div class="px-3 hover:bg-zinc-800 flex items-center"><iconify-icon class="text-xs" icon="ph:square"></iconify-icon></div>
+<div class="px-3 hover:bg-red-600 flex items-center"><iconify-icon icon="ph:x"></iconify-icon></div>
+</div>
+</div>
+</div>
+<div class="flex-1 flex overflow-hidden">
+<!-- 侧边栏 -->
+<aside class="w-60 bg-[#121214] border-r border-zinc-800/50 flex flex-col">
+<div class="p-6">
+<div class="relative">
+<iconify-icon class="absolute left-3 top-2.5 text-zinc-500" icon="ph:magnifying-glass"></iconify-icon>
+<input class="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg py-2 pl-10 pr-4 text-xs focus:border-blue-500 outline-none" placeholder="搜索库..." type="text"/>
+</div>
+</div>
+<nav class="flex-1 px-3 space-y-6 overflow-y-auto">
+<div>
+<h3 class="px-3 text-[10px] uppercase font-bold text-zinc-600 mb-2">音乐库</h3>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded bg-blue-600 text-white text-sm" href="index.html">
+<iconify-icon icon="ph:music-note-bold"></iconify-icon><span>全部歌曲</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-zinc-400 hover:bg-zinc-800 text-sm" href="playlists.html">
+<iconify-icon icon="ph:list-heart-bold"></iconify-icon><span>播放列表</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-zinc-400 hover:bg-zinc-800 text-sm" href="folders.html">
+<iconify-icon icon="ph:folder-open-bold"></iconify-icon><span>文件夹</span>
+</a>
+</div>
+</div>
+<div>
+<h3 class="px-3 text-[10px] uppercase font-bold text-zinc-600 mb-2">最近播放</h3>
+<div class="px-3 space-y-3">
+<div class="flex items-center gap-2 group cursor-pointer">
+<div class="w-8 h-8 rounded bg-zinc-800"></div>
+<div class="overflow-hidden"><p class="text-xs truncate">星环轨道</p></div>
+</div>
+<div class="flex items-center gap-2 group cursor-pointer">
+<div class="w-8 h-8 rounded bg-zinc-800"></div>
+<div class="overflow-hidden"><p class="text-xs truncate">Deep Logic</p></div>
+</div>
+</div>
+</div>
+</nav>
+</aside>
+<!-- 主内容 -->
+<main class="flex-1 flex flex-col overflow-y-auto bg-gradient-to-b from-zinc-900 to-[#09090b]">
+<div class="p-8">
+<header class="mb-10 flex justify-between items-end">
+<div>
+<h1 class="text-4xl font-black mb-2">本地音乐库</h1>
+<p class="text-zinc-500 text-sm">共 1,248 首音乐 · 最后同步于 2026-04-19</p>
+</div>
+<div class="flex gap-3">
+<button class="bg-white text-black px-6 py-2 rounded-full font-bold text-sm hover:scale-105 transition-all">播放全部</button>
+<button class="bg-zinc-800 text-white px-6 py-2 rounded-full font-bold text-sm hover:bg-zinc-700">随机</button>
+</div>
+</header>
+<div class="space-y-1">
+<div class="grid grid-cols-[50px_1fr_1fr_100px] px-4 py-2 text-[10px] uppercase font-bold text-zinc-600 border-b border-zinc-800">
+<span>#</span><span>标题</span><span>专辑</span><span class="text-right">时长</span>
+</div>
+<!-- 列表项 -->
+<div class="grid grid-cols-[50px_1fr_1fr_100px] px-4 py-3 items-center hover:bg-zinc-800/50 rounded-lg group cursor-pointer transition-colors" onclick="window.location.href='lyrics.html'">
+<span class="text-zinc-600 group-hover:text-blue-500">01</span>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-zinc-800 rounded overflow-hidden">
+<img alt="Cover" class="w-full h-full object-cover" src="https://modao.cc/agent-py/media/generated_images/2026-04-19/d20cb51d2e3e465bab1e8f63d4e5c026.jpg"/>
+</div>
+<div>
+<p class="text-sm font-bold">夜航星 (Night Voyage)</p>
+<p class="text-[10px] text-zinc-500">张三</p>
+</div>
+</div>
+<span class="text-xs text-zinc-500">三体：我的世界</span>
+<span class="text-xs text-zinc-500 text-right">04:32</span>
+</div>
+<!-- 更多模拟行 -->
+<div class="grid grid-cols-[50px_1fr_1fr_100px] px-4 py-3 items-center hover:bg-zinc-800/50 rounded-lg group cursor-pointer transition-colors">
+<span class="text-zinc-600">02</span>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-zinc-800 rounded"></div>
+<div>
+<p class="text-sm font-bold">量子纠缠</p>
+<p class="text-[10px] text-zinc-500">李四</p>
+</div>
+</div>
+<span class="text-xs text-zinc-500">物理法则</span>
+<span class="text-xs text-zinc-500 text-right">03:15</span>
+</div>
+<div class="grid grid-cols-[50px_1fr_1fr_100px] px-4 py-3 items-center hover:bg-zinc-800/50 rounded-lg group cursor-pointer transition-colors">
+<span class="text-zinc-600">03</span>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-zinc-800 rounded"></div>
+<div>
+<p class="text-sm font-bold">孤独的观测者</p>
+<p class="text-[10px] text-zinc-500">王五</p>
+</div>
+</div>
+<span class="text-xs text-zinc-500">视界线</span>
+<span class="text-xs text-zinc-500 text-right">05:12</span>
+</div>
+<div class="grid grid-cols-[50px_1fr_1fr_100px] px-4 py-3 items-center hover:bg-zinc-800/50 rounded-lg group cursor-pointer transition-colors">
+<span class="text-zinc-600">04</span>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-zinc-800 rounded"></div>
+<div>
+<p class="text-sm font-bold">雨夜赛博</p>
+<p class="text-[10px] text-zinc-500">SynthWave Art</p>
+</div>
+</div>
+<span class="text-xs text-zinc-500">Neon City</span>
+<span class="text-xs text-zinc-500 text-right">03:48</span>
+</div>
+<div class="grid grid-cols-[50px_1fr_1fr_100px] px-4 py-3 items-center hover:bg-zinc-800/50 rounded-lg group cursor-pointer transition-colors">
+<span class="text-zinc-600">05</span>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-zinc-800 rounded"></div>
+<div>
+<p class="text-sm font-bold">来自深空的频率</p>
+<p class="text-[10px] text-zinc-500">Unknown</p>
+</div>
+</div>
+<span class="text-xs text-zinc-500">Signal From Mars</span>
+<span class="text-xs text-zinc-500 text-right">02:59</span>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- 底部播放栏 -->
+<footer class="h-20 bg-[#121214] border-t border-zinc-800 flex items-center px-6 gap-6 relative">
+<div class="absolute top-0 left-0 w-full h-1 bg-zinc-800">
+<div class="h-full bg-blue-500 w-[45%]"></div>
+</div>
+<div class="w-1/4 flex items-center gap-3">
+<a class="w-12 h-12 bg-zinc-800 rounded overflow-hidden shadow-lg group" href="lyrics.html">
+<img alt="Current" class="w-full h-full object-cover" src="https://modao.cc/agent-py/media/generated_images/2026-04-19/fec71234078742aa843d38f09724db28.jpg"/>
+</a>
+<div class="overflow-hidden">
+<p class="text-sm font-bold truncate">夜航星 (Night Voyage)</p>
+<p class="text-[10px] text-zinc-500">张三</p>
+</div>
+</div>
+<div class="flex-1 flex flex-col items-center gap-1">
+<div class="flex items-center gap-6">
+<iconify-icon class="text-zinc-500 hover:text-white cursor-pointer" icon="ph:shuffle"></iconify-icon>
+<iconify-icon class="text-xl hover:text-white cursor-pointer" icon="ph:skip-back-fill"></iconify-icon>
+<div class="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center hover:scale-105 cursor-pointer">
+<iconify-icon class="text-xl" icon="ph:play-fill"></iconify-icon>
+</div>
+<iconify-icon class="text-xl hover:text-white cursor-pointer" icon="ph:skip-forward-fill"></iconify-icon>
+<iconify-icon class="text-blue-500 cursor-pointer" icon="ph:repeat"></iconify-icon>
+</div>
+<div class="flex items-center gap-2 w-full max-w-md text-[9px] text-zinc-500 font-mono">
+<span>02:10</span>
+<div class="flex-1 h-1 bg-zinc-800 rounded-full"></div>
+<span>04:32</span>
+</div>
+</div>
+<div class="w-1/4 flex items-center justify-end gap-4">
+<iconify-icon class="text-zinc-400" icon="ph:speaker-high-bold"></iconify-icon>
+<div class="w-20 h-1 bg-zinc-800 rounded-full"><div class="w-1/2 h-full bg-zinc-400"></div></div>
+<iconify-icon class="text-zinc-400 hover:text-white cursor-pointer" icon="ph:list-bold"></iconify-icon>
+</div>
+</footer>
+<script>
+        // 托盘菜单模拟
+        const tray = document.getElementById('trayIcon');
+        const menu = document.getElementById('trayMenu');
+        tray.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menu.classList.toggle('hidden');
+        });
+        document.addEventListener('click', () => menu.classList.add('hidden'));
+    </script>
+</body>
+</html>
