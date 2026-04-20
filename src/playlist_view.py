@@ -4,7 +4,9 @@ import os
 import time
 
 from PySide6.QtCore import Qt, Signal, QUrl
-from PySide6.QtGui import QPainter, QColor, QPen, QPainterPath, QLinearGradient
+from PySide6.QtGui import (
+    QPainter, QColor, QPen, QPainterPath, QLinearGradient, QPixmap,
+)
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QScrollArea, QFileDialog, QSizePolicy, QGridLayout,
@@ -29,11 +31,14 @@ class _VideoRow(QWidget):
     """视频列表行 — 复刻 index.html 的行结构"""
     clicked = Signal(str)
 
-    def __init__(self, index: int, item: VideoItem, parent=None):
+    def __init__(self, index: int, item: VideoItem, thumbnail_path: str | None = None, parent=None):
         super().__init__(parent)
         self._index = index
         self._item = item
         self._hovered = False
+        self._thumb_pix: QPixmap | None = None
+        if thumbnail_path and os.path.isfile(thumbnail_path):
+            self._thumb_pix = QPixmap(thumbnail_path)
         self.setFixedHeight(56)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setAttribute(Qt.WidgetAttribute.WA_Hover)
@@ -67,22 +72,38 @@ class _VideoRow(QWidget):
         p.drawText(x_offset, 0, col1_w, h, Qt.AlignmentFlag.AlignVCenter, num_str)
         x_offset += col1_w
 
-        # 缩略图占位
+        # 缩略图
         thumb_y = (h - 40) // 2
-        p.setBrush(QColor(COLOR_PROGRESS_BG))
-        p.setPen(Qt.PenStyle.NoPen)
-        p.drawRoundedRect(x_offset, thumb_y, 40, 40, 4, 4)
+        clip = QPainterPath()
+        clip.addRoundedRect(x_offset, thumb_y, 40, 40, 4, 4)
+
+        if self._thumb_pix and not self._thumb_pix.isNull():
+            p.save()
+            p.setClipPath(clip)
+            scaled = self._thumb_pix.scaled(
+                40, 40,
+                Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+            dx = (scaled.width() - 40) // 2
+            dy = (scaled.height() - 40) // 2
+            p.drawPixmap(x_offset, thumb_y, scaled, dx, dy, 40, 40)
+            p.restore()
+        else:
+            p.setBrush(QColor(COLOR_PROGRESS_BG))
+            p.setPen(Qt.PenStyle.NoPen)
+            p.drawRoundedRect(x_offset, thumb_y, 40, 40, 4, 4)
 
         # 播放三角（hover 时显示在缩略图上）
         if self._hovered:
             p.setBrush(QColor(COLOR_WHITE))
-            path = QPainterPath()
+            tri = QPainterPath()
             tcx, tcy = x_offset + 20, thumb_y + 20
-            path.moveTo(tcx - 5, tcy - 6)
-            path.lineTo(tcx + 6, tcy)
-            path.lineTo(tcx - 5, tcy + 6)
-            path.closeSubpath()
-            p.drawPath(path)
+            tri.moveTo(tcx - 5, tcy - 6)
+            tri.lineTo(tcx + 6, tcy)
+            tri.lineTo(tcx - 5, tcy + 6)
+            tri.closeSubpath()
+            p.drawPath(tri)
 
         x_offset += 52
 
@@ -692,7 +713,8 @@ class PlaylistView(QWidget):
 
         # 添加新行
         for i, v in enumerate(videos[:PAGE_SIZE]):
-            row = _VideoRow(i, v)
+            thumb = self._library.get_thumbnail(v.path)
+            row = _VideoRow(i, v, thumbnail_path=thumb)
             row.clicked.connect(self.play_video_requested.emit)
             self._list_layout.insertWidget(i, row)
 
@@ -750,8 +772,14 @@ class PlaylistView(QWidget):
 
     def _refresh_recent(self):
         recent = self._library.recent
-        items = [(os.path.splitext(os.path.basename(r.get("path", "")))[0],
-                  str(r.get("path", ""))) for r in recent]
+        items = [
+            (
+                os.path.splitext(os.path.basename(r.get("path", "")))[0],
+                str(r.get("path", "")),
+                self._library.get_thumbnail(str(r.get("path", ""))),
+            )
+            for r in recent
+        ]
         self._sidebar.update_recent(items)
 
     # region 拖拽支持
@@ -769,9 +797,7 @@ class PlaylistView(QWidget):
             path = url.toLocalFile()
             ext = os.path.splitext(path)[1].lower()
             if ext in VIDEO_EXTENSIONS:
-                if self._nav_mode == "playlists" and self._current_playlist_id:
-                    self._library.add_to_playlist(self._current_playlist_id, path)
-                else:
-                    self._library.add_file(path)
+                self.play_video_requested.emit(path)
+                return
 
     # endregion

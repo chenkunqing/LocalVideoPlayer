@@ -7,7 +7,8 @@ import uuid
 
 from PySide6.QtCore import QObject, Signal
 
-from constants import LIBRARY_FILE, PLAYLIST_COLORS
+from constants import LIBRARY_FILE, PLAYLIST_COLORS, THUMBNAILS_DIR
+from thumbnail_manager import ThumbnailWorker, generate_thumbnails
 from video_scanner import VideoItem, scan_folder, scan_file, probe_durations, ScanWorker
 
 
@@ -21,12 +22,15 @@ class VideoLibrary(QObject):
     def __init__(self, data_dir: str, parent=None):
         super().__init__(parent)
         self._data_path = os.path.join(data_dir, LIBRARY_FILE)
+        self._thumb_dir = os.path.join(data_dir, THUMBNAILS_DIR)
         self._folders: list[str] = []
         self._recent: list[dict[str, object]] = []
         self._playlists: list[dict[str, object]] = []
         self._videos: list[VideoItem] = []
         self._duration_cache: dict[str, float] = {}
+        self._thumbnail_cache: dict[str, str] = {}
         self._scan_worker: ScanWorker | None = None
+        self._thumb_worker: ThumbnailWorker | None = None
         self._load()
 
     def _load(self):
@@ -39,6 +43,7 @@ class VideoLibrary(QObject):
             self._recent = data.get("recent", [])
             self._playlists = data.get("playlists", [])
             self._duration_cache = data.get("durations", {})
+            self._thumbnail_cache = data.get("thumbnails", {})
         except (json.JSONDecodeError, OSError):
             pass
 
@@ -48,6 +53,7 @@ class VideoLibrary(QObject):
             "recent": self._recent,
             "playlists": self._playlists,
             "durations": self._duration_cache,
+            "thumbnails": self._thumbnail_cache,
         }
         os.makedirs(os.path.dirname(self._data_path), exist_ok=True)
         tmp = self._data_path + ".tmp"
@@ -93,6 +99,8 @@ class VideoLibrary(QObject):
             item.duration = dur_map.get(item.path, 0.0)
             self._duration_cache.update(dur_map)
             self._videos.append(item)
+            thumb_map = generate_thumbnails([item.path], self._duration_cache, self._thumb_dir)
+            self._thumbnail_cache.update(thumb_map)
             self._save()
             self.library_changed.emit()
 
@@ -119,6 +127,27 @@ class VideoLibrary(QObject):
         self._duration_cache.update(dur_map)
         self._save()
         self.library_changed.emit()
+        self._start_thumbnail_gen([item.path for item in unique])
+
+    def _start_thumbnail_gen(self, paths: list[str]):
+        if self._thumb_worker is not None and self._thumb_worker.isRunning():
+            return
+        self._thumb_worker = ThumbnailWorker(
+            paths, self._duration_cache, self._thumb_dir, self
+        )
+        self._thumb_worker.finished.connect(self._on_thumbnails_done)
+        self._thumb_worker.start()
+
+    def _on_thumbnails_done(self, thumb_map: dict[str, str]):
+        self._thumbnail_cache.update(thumb_map)
+        self._save()
+        self.library_changed.emit()
+
+    def get_thumbnail(self, path: str) -> str | None:
+        t = self._thumbnail_cache.get(path)
+        if t and os.path.isfile(t):
+            return t
+        return None
 
     def add_recent(self, path: str, progress: float = 0.0):
         norm = os.path.normpath(path)

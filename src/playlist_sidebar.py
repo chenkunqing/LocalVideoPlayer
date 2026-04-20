@@ -1,7 +1,9 @@
 """播放列表侧边栏 — 搜索、导航、最近观看"""
 
 from PySide6.QtCore import Qt, Signal, QTimer
-from PySide6.QtGui import QPainter, QColor, QPen, QPainterPath
+import os
+
+from PySide6.QtGui import QPainter, QColor, QPen, QPainterPath, QPixmap
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QScrollArea, QSizePolicy,
@@ -106,11 +108,14 @@ class _RecentItem(QWidget):
     """最近观看条目"""
     clicked = Signal(str)
 
-    def __init__(self, name: str, path: str, parent=None):
+    def __init__(self, name: str, path: str, thumbnail_path: str | None = None, parent=None):
         super().__init__(parent)
         self._name = name
         self._path = path
         self._hovered = False
+        self._thumb_pix: QPixmap | None = None
+        if thumbnail_path and os.path.isfile(thumbnail_path):
+            self._thumb_pix = QPixmap(thumbnail_path)
         self.setFixedHeight(36)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setAttribute(Qt.WidgetAttribute.WA_Hover)
@@ -120,10 +125,25 @@ class _RecentItem(QWidget):
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         w, h = self.width(), self.height()
 
-        # 缩略图占位
-        p.setBrush(QColor(COLOR_PROGRESS_BG))
-        p.setPen(Qt.PenStyle.NoPen)
-        p.drawRoundedRect(4, 4, 28, 28, 4, 4)
+        # 缩略图
+        clip = QPainterPath()
+        clip.addRoundedRect(4, 4, 28, 28, 4, 4)
+        if self._thumb_pix and not self._thumb_pix.isNull():
+            p.save()
+            p.setClipPath(clip)
+            scaled = self._thumb_pix.scaled(
+                28, 28,
+                Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+            dx = (scaled.width() - 28) // 2
+            dy = (scaled.height() - 28) // 2
+            p.drawPixmap(4, 4, scaled, dx, dy, 28, 28)
+            p.restore()
+        else:
+            p.setBrush(QColor(COLOR_PROGRESS_BG))
+            p.setPen(Qt.PenStyle.NoPen)
+            p.drawRoundedRect(4, 4, 28, 28, 4, 4)
 
         # 文件名
         p.setPen(QColor(COLOR_TEXT_DIM if not self._hovered else COLOR_TEXT))
@@ -279,14 +299,14 @@ class PlaylistSidebar(QWidget):
         self._current_nav = key
         self.nav_changed.emit(key)
 
-    def update_recent(self, items: list[tuple[str, str]]):
-        """更新最近观看列表，items = [(name, path), ...]"""
+    def update_recent(self, items: list[tuple[str, str, str | None]]):
+        """更新最近观看列表，items = [(name, path, thumbnail_path), ...]"""
         while self._recent_layout.count():
             w = self._recent_layout.takeAt(0).widget()
             if w:
                 w.deleteLater()
-        for name, path in items[:5]:
-            ri = _RecentItem(name, path)
+        for name, path, thumb in items[:5]:
+            ri = _RecentItem(name, path, thumbnail_path=thumb)
             ri.clicked.connect(self.recent_item_clicked.emit)
             self._recent_layout.addWidget(ri)
         self._recent_label.setVisible(len(items) > 0)

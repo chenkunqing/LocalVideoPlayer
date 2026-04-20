@@ -82,6 +82,11 @@ PLAYLIST_COLORS = [
 ]
 # endregion
 
+# region 缩略图
+THUMBNAILS_DIR = "thumbnails"
+THUMBNAIL_SEEK_RATIO = 0.3
+# endregion
+
 # region 数据文件
 KEYFRAMES_FILE = "keyframes.json"
 LIBRARY_FILE = "library.json"
