@@ -45,10 +45,13 @@ def main():
     app.setStyleSheet(GLOBAL_STYLE)
 
     # 数据目录
-    data_dir = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        "data"
-    )
+    if getattr(sys, "frozen", False):
+        data_dir = os.path.join(os.path.dirname(sys.executable), "data")
+    else:
+        data_dir = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "data"
+        )
 
     window = MainWindow(data_dir)
     window.show()
