@@ -10,7 +10,7 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QScrollArea, QFileDialog, QSizePolicy, QGridLayout,
-    QDialog, QLineEdit,
+    QDialog, QLineEdit, QMenu,
 )
 
 from constants import (
@@ -205,6 +205,7 @@ class _PlaylistCard(QWidget):
     """播放列表卡片"""
     clicked = Signal(str)
     play_clicked = Signal(str)
+    delete_clicked = Signal(str)
 
     CARD_HEIGHT = 180
 
@@ -302,7 +303,6 @@ class _PlaylistCard(QWidget):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
-            # 检测是否点击了播放按钮区域
             btn_x, btn_y, btn_r = self.width() - 56, 20, 36
             pos = event.position()
             if (btn_x <= pos.x() <= btn_x + btn_r and
@@ -310,6 +310,21 @@ class _PlaylistCard(QWidget):
                 self.play_clicked.emit(str(self._playlist.get("id", "")))
             else:
                 self.clicked.emit(str(self._playlist.get("id", "")))
+
+    def contextMenuEvent(self, event):
+        menu = QMenu(self)
+        menu.setStyleSheet(f"""
+            QMenu {{
+                background: {COLOR_PANEL}; color: {COLOR_TEXT};
+                border: 1px solid {COLOR_BORDER}; border-radius: 6px; padding: 4px;
+            }}
+            QMenu::item {{ padding: 6px 24px; border-radius: 4px; }}
+            QMenu::item:selected {{ background: {COLOR_ACCENT}; }}
+        """)
+        delete_action = menu.addAction("删除播放列表")
+        action = menu.exec(event.globalPos())
+        if action == delete_action:
+            self.delete_clicked.emit(str(self._playlist.get("id", "")))
 
 
 class _CreatePlaylistDialog(QDialog):
@@ -788,6 +803,7 @@ class PlaylistView(QWidget):
             card = _PlaylistCard(pl)
             card.clicked.connect(self._on_playlist_card_clicked)
             card.play_clicked.connect(self._on_playlist_play_clicked)
+            card.delete_clicked.connect(self._on_playlist_delete)
             self._playlist_grid_layout.addWidget(card, i // cols, i % cols)
 
         # 填充空列，保持卡片不被拉伸到全宽
