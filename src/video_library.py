@@ -142,6 +142,7 @@ class VideoLibrary(QObject):
         self._thumbnail_cache.update(thumb_map)
         self._save()
         self.library_changed.emit()
+        self.recent_changed.emit()
 
     def get_thumbnail(self, path: str) -> str | None:
         t = self._thumbnail_cache.get(path)

@@ -1,8 +1,10 @@
-"""视频缩略图生成器 — 通过 ffmpeg 提取关键帧"""
+"""视频缩略图生成器 — 通过 mpv 截图提取关键帧"""
 
 import hashlib
+import locale
 import os
-import subprocess
+import threading
+import time
 
 from PySide6.QtCore import QThread, Signal
 
@@ -12,6 +14,54 @@ from constants import THUMBNAIL_SEEK_RATIO
 def _thumb_path(video_path: str, thumb_dir: str) -> str:
     key = hashlib.md5(video_path.encode("utf-8")).hexdigest()
     return os.path.join(thumb_dir, f"{key}.jpg")
+
+
+def _generate_one(path: str, seek: float, out: str) -> bool:
+    """为单个视频生成缩略图，成功返回 True"""
+    import mpv
+
+    locale.setlocale(locale.LC_NUMERIC, "C")
+    seekable_evt = threading.Event()
+    seek_done = threading.Event()
+
+    player = mpv.MPV(
+        ao="null",
+        really_quiet=True,
+        vo="null",
+        aid="no",
+        sid="no",
+    )
+    player["vf"] = "scale=160:90:force_original_aspect_ratio=increase,crop=160:90"
+
+    @player.property_observer("seekable")
+    def _on_seekable(_name: str, value: object) -> None:
+        if value:
+            seekable_evt.set()
+
+    @player.property_observer("time-pos")
+    def _on_time(_name: str, value: object) -> None:
+        if isinstance(value, (int, float)) and value >= seek * 0.8:
+            seek_done.set()
+
+    try:
+        player.play(path)
+        if not seekable_evt.wait(timeout=5):
+            player.terminate()
+            return False
+
+        player.command("seek", str(seek), "absolute")
+        seek_done.wait(timeout=5)
+        time.sleep(0.1)
+
+        player.screenshot_to_file(out, includes="video")
+        player.terminate()
+        return os.path.isfile(out)
+    except Exception:
+        try:
+            player.terminate()
+        except Exception:
+            pass
+        return False
 
 
 def generate_thumbnails(
@@ -32,26 +82,8 @@ def generate_thumbnails(
         duration = duration_cache.get(path, 0.0)
         seek = max(duration * THUMBNAIL_SEEK_RATIO, 0.5) if duration > 0 else 1.0
 
-        try:
-            subprocess.run(
-                [
-                    "ffmpeg", "-y",
-                    "-ss", f"{seek:.2f}",
-                    "-i", path,
-                    "-frames:v", "1",
-                    "-vf", "scale=160:90:force_original_aspect_ratio=increase,crop=160:90",
-                    "-q:v", "6",
-                    out,
-                ],
-                stdin=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                timeout=10,
-            )
-            if os.path.isfile(out):
-                result[path] = out
-        except Exception:
-            pass
+        if _generate_one(path, seek, out):
+            result[path] = out
 
     return result
 
