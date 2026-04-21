@@ -1,6 +1,15 @@
 {
-  "version": "abc1234",
+  "version": "47e58a4",
   "download_url": "http://119.91.95.23:3002/releases/KKPlayer.exe",
-  "changelog": "修复若干问题，提升稳定性",
-  "file_size": 0
+  "changelog": "- feat: 添加自动更新功能 + 深浅主题切换
+- refactor: 优化窗口拖拽调整大小和标题栏拖动
+- feat: 添加手动检查更新功能（自定义服务器 + 下载安装包）
+- feat: 新增 Shift+左右箭头按帧跳转快捷键
+- feat: 侧边栏底部显示版本号（git commit hash）
+- refactor: 用系统原生 startSystemResize 替代手动窗口拖拽调整，提升流畅度
+- refactor: 排除未使用的DLL和Python模块以减小打包体积(93MB→69MB)
+- refactor: 排除未使用的DLL和Python模块以减小打包体积(93MB→69MB)
+- fix: 修复打包后添加文件夹看不到视频列表的问题
+- refactor: 打包改为单文件模式并排除未使用的PySide6模块以减小体积",
+  "file_size": 69903693
 }
