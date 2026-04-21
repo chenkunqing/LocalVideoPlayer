@@ -1,22 +1,5 @@
 """全局常量"""
 
-# region 颜色
-COLOR_BG = "#09090b"
-COLOR_PANEL = "#121214"
-COLOR_BORDER = "#27272a"
-COLOR_BORDER_HALF = "rgba(39, 39, 42, 0.5)"
-COLOR_ACCENT = "#8b5cf6"
-COLOR_ACCENT_DARK = "#7c3aed"
-COLOR_ACCENT_LIGHT = "#a78bfa"
-COLOR_TEXT = "#fafafa"
-COLOR_TEXT_DIM = "#71717a"
-COLOR_TEXT_DARK = "#52525b"
-COLOR_PROGRESS_BG = "#3f3f46"
-COLOR_RED = "#dc2626"
-COLOR_WHITE = "#ffffff"
-COLOR_BLACK = "#000000"
-# endregion
-
 # region 播放速度
 SPEED_OPTIONS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0]
 # endregion
@@ -94,4 +77,5 @@ KEYFRAMES_FILE = "keyframes.json"
 LIBRARY_FILE = "library.json"
 SHORTCUTS_FILE = "shortcuts.json"
 UPDATE_CONFIG_FILE = "update.json"
+UPDATE_SERVER_URL = "http://119.91.95.23:3002"
 # endregion

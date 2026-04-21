@@ -10,6 +10,7 @@ from constants import (
     WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT,
     CONTROLS_HIDE_DELAY_MS, VIDEO_EXTENSIONS,
 )
+from theme import theme
 from title_bar import TitleBar
 from mpv_widget import MpvWidget
 from controls_overlay import ControlsOverlay
@@ -29,7 +30,7 @@ class MainWindow(QWidget):
         self.setObjectName("MainWindow")
         self.setWindowTitle("KK Player")
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
-        self.setStyleSheet("#MainWindow { background-color: #09090b; }")
+        self._apply_theme()
         self.resize(WINDOW_DEFAULT_WIDTH, WINDOW_DEFAULT_HEIGHT)
         self.setMinimumSize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT)
         self.setAcceptDrops(True)
@@ -110,6 +111,11 @@ class MainWindow(QWidget):
 
         # 窗口大小调整边距（无边框窗口，委托系统原生调整）
         self._resize_margin = 12
+
+        theme.theme_changed.connect(self._apply_theme)
+
+    def _apply_theme(self) -> None:
+        self.setStyleSheet(f"#MainWindow {{ background-color: {theme.color('bg')}; }}")
 
     def _connect_signals(self):
         mpv = self.mpv_widget

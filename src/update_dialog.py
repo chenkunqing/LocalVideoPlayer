@@ -6,12 +6,9 @@ from PySide6.QtWidgets import (
     QPushButton, QWidget, QProgressBar, QLineEdit,
 )
 
-from constants import (
-    COLOR_PANEL, COLOR_BORDER, COLOR_TEXT, COLOR_TEXT_DIM,
-    COLOR_TEXT_DARK, COLOR_ACCENT, COLOR_WHITE, COLOR_PROGRESS_BG, COLOR_BG,
-)
+from theme import theme
 from updater import (
-    UpdateConfig, UpdateChecker, UpdateDownloader, launch_installer_and_quit,
+    UpdateConfig, UpdateChecker, UpdateDownloader, replace_and_restart,
 )
 from version import get_version
 
@@ -37,13 +34,6 @@ class UpdateDialog(QDialog):
 
         self._frame = QWidget()
         self._frame.setObjectName("updateFrame")
-        self._frame.setStyleSheet(f"""
-            #updateFrame {{
-                background: {COLOR_PANEL};
-                border: 1px solid {COLOR_BORDER};
-                border-radius: 12px;
-            }}
-        """)
         outer.addWidget(self._frame)
 
         self._layout = QVBoxLayout(self._frame)
@@ -53,27 +43,14 @@ class UpdateDialog(QDialog):
         # 标题栏
         title_row = QHBoxLayout()
         self._title_label = QLabel("检查更新")
-        self._title_label.setStyleSheet(
-            f"color: {COLOR_TEXT}; font-size: 15px; font-weight: bold; background: transparent;"
-        )
         title_row.addWidget(self._title_label)
         title_row.addStretch()
 
-        close_btn = QPushButton("✕")
-        close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        close_btn.setFixedSize(28, 28)
-        close_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: transparent;
-                color: {COLOR_TEXT_DIM};
-                border: none;
-                border-radius: 14px;
-                font-size: 14px;
-            }}
-            QPushButton:hover {{ background: rgba(63, 63, 70, 0.8); color: {COLOR_TEXT}; }}
-        """)
-        close_btn.clicked.connect(self._on_close)
-        title_row.addWidget(close_btn)
+        self._close_btn = QPushButton("✕")
+        self._close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._close_btn.setFixedSize(28, 28)
+        self._close_btn.clicked.connect(self._on_close)
+        title_row.addWidget(self._close_btn)
         self._layout.addLayout(title_row)
 
         # 内容区域（动态切换）
@@ -89,11 +66,35 @@ class UpdateDialog(QDialog):
         self._btn_row.addStretch()
         self._layout.addLayout(self._btn_row)
 
+        self._apply_theme()
+
         # 根据配置决定初始状态
         if not self._config.server_url:
             self._show_config_input()
         else:
             self._start_check()
+
+    def _apply_theme(self) -> None:
+        self._frame.setStyleSheet(f"""
+            #updateFrame {{
+                background: {theme.color("panel")};
+                border: 1px solid {theme.color("border")};
+                border-radius: 12px;
+            }}
+        """)
+        self._title_label.setStyleSheet(
+            f"color: {theme.color('text')}; font-size: 15px; font-weight: bold; background: transparent;"
+        )
+        self._close_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent;
+                color: {theme.color("text_dim")};
+                border: none;
+                border-radius: 14px;
+                font-size: 14px;
+            }}
+            QPushButton:hover {{ background: {theme.color("hover_strong")}; color: {theme.color("text")}; }}
+        """)
 
     # region 配置服务器地址
 
@@ -102,22 +103,22 @@ class UpdateDialog(QDialog):
         self._title_label.setText("配置更新服务器")
 
         hint = QLabel("请输入更新服务器地址：")
-        hint.setStyleSheet(f"color: {COLOR_TEXT_DIM}; font-size: 13px; background: transparent;")
+        hint.setStyleSheet(f"color: {theme.color('text_dim')}; font-size: 13px; background: transparent;")
         self._content_layout.addWidget(hint)
 
         self._url_input = QLineEdit()
         self._url_input.setPlaceholderText("https://example.com")
         self._url_input.setStyleSheet(f"""
             QLineEdit {{
-                background: {COLOR_BG};
-                border: 1px solid {COLOR_PROGRESS_BG};
+                background: {theme.color("bg")};
+                border: 1px solid {theme.color("progress_bg")};
                 border-radius: 8px;
                 padding: 10px 16px;
                 font-size: 13px;
-                color: {COLOR_TEXT};
+                color: {theme.color("text")};
             }}
-            QLineEdit::placeholder {{ color: {COLOR_TEXT_DARK}; }}
-            QLineEdit:focus {{ border-color: {COLOR_ACCENT}; }}
+            QLineEdit::placeholder {{ color: {theme.color("text_dark")}; }}
+            QLineEdit:focus {{ border-color: {theme.color("accent")}; }}
         """)
         self._content_layout.addWidget(self._url_input)
         self._content_layout.addStretch()
@@ -141,7 +142,7 @@ class UpdateDialog(QDialog):
 
         status = QLabel("正在检查更新...")
         status.setObjectName("statusLabel")
-        status.setStyleSheet(f"color: {COLOR_TEXT_DIM}; font-size: 13px; background: transparent;")
+        status.setStyleSheet(f"color: {theme.color('text_dim')}; font-size: 13px; background: transparent;")
         status.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._content_layout.addStretch()
         self._content_layout.addWidget(status)
@@ -160,7 +161,7 @@ class UpdateDialog(QDialog):
         self._title_label.setText("检查更新")
 
         label = QLabel(f"当前版本：v {get_version()}\n\n已是最新版本")
-        label.setStyleSheet(f"color: {COLOR_TEXT_DIM}; font-size: 13px; background: transparent;")
+        label.setStyleSheet(f"color: {theme.color('text_dim')}; font-size: 13px; background: transparent;")
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._content_layout.addStretch()
         self._content_layout.addWidget(label)
@@ -173,7 +174,7 @@ class UpdateDialog(QDialog):
         self._title_label.setText("检查更新")
 
         label = QLabel(msg)
-        label.setStyleSheet(f"color: {COLOR_TEXT_DIM}; font-size: 13px; background: transparent;")
+        label.setStyleSheet(f"color: {theme.color('text_dim')}; font-size: 13px; background: transparent;")
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         label.setWordWrap(True)
         self._content_layout.addStretch()
@@ -192,21 +193,21 @@ class UpdateDialog(QDialog):
         file_size = int(info.get("file_size", 0))
 
         ver_label = QLabel(f"新版本：v {version}　　当前：v {get_version()}")
-        ver_label.setStyleSheet(f"color: {COLOR_TEXT}; font-size: 13px; background: transparent;")
+        ver_label.setStyleSheet(f"color: {theme.color('text')}; font-size: 13px; background: transparent;")
         self._content_layout.addWidget(ver_label)
 
         if file_size > 0:
             size_mb = file_size / (1024 * 1024)
-            size_label = QLabel(f"安装包大小：{size_mb:.1f} MB")
+            size_label = QLabel(f"文件大小：{size_mb:.1f} MB")
             size_label.setStyleSheet(
-                f"color: {COLOR_TEXT_DIM}; font-size: 12px; background: transparent;"
+                f"color: {theme.color('text_dim')}; font-size: 12px; background: transparent;"
             )
             self._content_layout.addWidget(size_label)
 
         if changelog:
             log_label = QLabel(changelog)
             log_label.setStyleSheet(
-                f"color: {COLOR_TEXT_DIM}; font-size: 12px; background: transparent;"
+                f"color: {theme.color('text_dim')}; font-size: 12px; background: transparent;"
             )
             log_label.setWordWrap(True)
             self._content_layout.addWidget(log_label)
@@ -231,7 +232,7 @@ class UpdateDialog(QDialog):
 
         self._progress_label = QLabel("正在下载...")
         self._progress_label.setStyleSheet(
-            f"color: {COLOR_TEXT_DIM}; font-size: 13px; background: transparent;"
+            f"color: {theme.color('text_dim')}; font-size: 13px; background: transparent;"
         )
         self._content_layout.addWidget(self._progress_label)
 
@@ -242,12 +243,12 @@ class UpdateDialog(QDialog):
         self._progress_bar.setTextVisible(False)
         self._progress_bar.setStyleSheet(f"""
             QProgressBar {{
-                background: {COLOR_PROGRESS_BG};
+                background: {theme.color("progress_bg")};
                 border: none;
                 border-radius: 3px;
             }}
             QProgressBar::chunk {{
-                background: {COLOR_ACCENT};
+                background: {theme.color("accent")};
                 border-radius: 3px;
             }}
         """)
@@ -255,7 +256,7 @@ class UpdateDialog(QDialog):
 
         self._size_label = QLabel("")
         self._size_label.setStyleSheet(
-            f"color: {COLOR_TEXT_DARK}; font-size: 11px; background: transparent;"
+            f"color: {theme.color('text_dark')}; font-size: 11px; background: transparent;"
         )
         self._content_layout.addWidget(self._size_label)
 
@@ -285,23 +286,23 @@ class UpdateDialog(QDialog):
         self._clear_content()
         self._title_label.setText("下载完成")
 
-        label = QLabel("安装包已下载完成，点击「安装更新」将关闭当前应用并启动安装程序。")
-        label.setStyleSheet(f"color: {COLOR_TEXT_DIM}; font-size: 13px; background: transparent;")
+        label = QLabel("新版本已下载完成，点击「立即更新」将自动替换并重启应用。")
+        label.setStyleSheet(f"color: {theme.color('text_dim')}; font-size: 13px; background: transparent;")
         label.setWordWrap(True)
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._content_layout.addStretch()
         self._content_layout.addWidget(label)
         self._content_layout.addStretch()
 
-        self._installer_path = path
-        self._add_buttons("稍后安装", self.reject, "安装更新", self._install)
+        self._new_exe_path = path
+        self._add_buttons("稍后更新", self.reject, "立即更新", self._do_replace)
 
     def _on_download_failed(self, msg: str) -> None:
         self._clear_content()
         self._title_label.setText("下载失败")
 
         label = QLabel(msg)
-        label.setStyleSheet(f"color: {COLOR_TEXT_DIM}; font-size: 13px; background: transparent;")
+        label.setStyleSheet(f"color: {theme.color('text_dim')}; font-size: 13px; background: transparent;")
         label.setWordWrap(True)
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._content_layout.addStretch()
@@ -315,8 +316,8 @@ class UpdateDialog(QDialog):
             self._downloader.cancel()
         self.reject()
 
-    def _install(self) -> None:
-        launch_installer_and_quit(self._installer_path)
+    def _do_replace(self) -> None:
+        replace_and_restart(self._new_exe_path)
 
     # endregion
 
@@ -351,13 +352,13 @@ class UpdateDialog(QDialog):
         sec_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent;
-                color: {COLOR_TEXT_DIM};
-                border: 1px solid {COLOR_PROGRESS_BG};
+                color: {theme.color("text_dim")};
+                border: 1px solid {theme.color("progress_bg")};
                 border-radius: 8px;
                 padding: 8px 20px;
                 font-size: 13px;
             }}
-            QPushButton:hover {{ background: rgba(63, 63, 70, 0.5); }}
+            QPushButton:hover {{ background: {theme.color("hover")}; }}
         """)
         sec_btn.clicked.connect(secondary_action)
         self._btn_row.addWidget(sec_btn)
@@ -367,15 +368,15 @@ class UpdateDialog(QDialog):
             pri_btn.setCursor(Qt.CursorShape.PointingHandCursor)
             pri_btn.setStyleSheet(f"""
                 QPushButton {{
-                    background: {COLOR_ACCENT};
-                    color: {COLOR_WHITE};
+                    background: {theme.color("accent")};
+                    color: {theme.color("white")};
                     border: none;
                     border-radius: 8px;
                     padding: 8px 20px;
                     font-size: 13px;
                     font-weight: bold;
                 }}
-                QPushButton:hover {{ background: #7c3aed; }}
+                QPushButton:hover {{ background: {theme.color("accent_dark")}; }}
             """)
             pri_btn.clicked.connect(primary_action)
             self._btn_row.addWidget(pri_btn)

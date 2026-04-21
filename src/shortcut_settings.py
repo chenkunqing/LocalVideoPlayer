@@ -7,12 +7,9 @@ from PySide6.QtWidgets import (
     QScrollArea,
 )
 
-from constants import (
-    COLOR_BG, COLOR_PANEL, COLOR_BORDER, COLOR_ACCENT,
-    COLOR_TEXT, COLOR_TEXT_DIM, COLOR_TEXT_DARK,
-    COLOR_PROGRESS_BG, COLOR_WHITE, COLOR_BLACK, COLOR_RED, SHORTCUTS,
-)
+from constants import SHORTCUTS
 from shortcut_config import ShortcutConfig, SHORTCUT_LABELS
+from theme import theme
 
 
 class _KeyBindingButton(QPushButton):
@@ -28,6 +25,11 @@ class _KeyBindingButton(QPushButton):
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self._apply_display_text()
         self._apply_normal_style()
+        theme.theme_changed.connect(self._on_theme_changed)
+
+    def _on_theme_changed(self) -> None:
+        if not self._recording:
+            self._apply_normal_style()
 
     def set_sequence(self, seq: str) -> None:
         self._current_seq = seq
@@ -54,7 +56,6 @@ class _KeyBindingButton(QPushButton):
             self._cancel_recording()
             return
 
-        # 忽略单独的修饰键
         modifier_keys = {
             Qt.Key.Key_Control, Qt.Key.Key_Shift,
             Qt.Key.Key_Alt, Qt.Key.Key_Meta,
@@ -82,9 +83,9 @@ class _KeyBindingButton(QPushButton):
         self.setStyleSheet(f"""
             QPushButton {{
                 background: rgba(139, 92, 246, 0.15);
-                border: 1px solid {COLOR_ACCENT};
+                border: 1px solid {theme.color("accent")};
                 border-radius: 6px;
-                color: {COLOR_ACCENT};
+                color: {theme.color("accent")};
                 font-size: 12px;
                 padding: 0 12px;
             }}
@@ -99,11 +100,11 @@ class _KeyBindingButton(QPushButton):
         self._apply_normal_style()
 
     def _apply_normal_style(self) -> None:
-        text_color = COLOR_TEXT if self._current_seq else COLOR_TEXT_DARK
+        text_color = theme.color("text") if self._current_seq else theme.color("text_dark")
         self.setStyleSheet(f"""
             QPushButton {{
-                background: rgba(63, 63, 70, 0.4);
-                border: 1px solid {COLOR_PROGRESS_BG};
+                background: {theme.color("hover")};
+                border: 1px solid {theme.color("progress_bg")};
                 border-radius: 6px;
                 color: {text_color};
                 font-size: 12px;
@@ -111,8 +112,8 @@ class _KeyBindingButton(QPushButton):
                 padding: 0 12px;
             }}
             QPushButton:hover {{
-                background: rgba(63, 63, 70, 0.7);
-                border-color: {COLOR_TEXT_DIM};
+                background: {theme.color("hover_strong")};
+                border-color: {theme.color("text_dim")};
             }}
         """)
 
@@ -132,13 +133,8 @@ class _ShortcutRow(QWidget):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(16, 0, 16, 0)
 
-        name_label = QLabel(label)
-        name_label.setStyleSheet(f"""
-            color: {COLOR_TEXT};
-            font-size: 13px;
-            background: transparent;
-        """)
-        layout.addWidget(name_label)
+        self._name_label = QLabel(label)
+        layout.addWidget(self._name_label)
         layout.addStretch()
 
         self.button = _KeyBindingButton(action, seq)
@@ -147,23 +143,33 @@ class _ShortcutRow(QWidget):
         self.delete_button = QPushButton("×")
         self.delete_button.setFixedSize(32, 32)
         self.delete_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.delete_button.clicked.connect(lambda: self.clear_requested.emit(self._action))
+        layout.addWidget(self.delete_button)
+
+        self._apply_theme()
+        theme.theme_changed.connect(self._apply_theme)
+
+    def _apply_theme(self) -> None:
+        self._name_label.setStyleSheet(f"""
+            color: {theme.color("text")};
+            font-size: 13px;
+            background: transparent;
+        """)
         self.delete_button.setStyleSheet(f"""
             QPushButton {{
                 background: transparent;
                 border: 1px solid transparent;
                 border-radius: 6px;
-                color: {COLOR_TEXT_DIM};
+                color: {theme.color("text_dim")};
                 font-size: 16px;
                 font-weight: bold;
             }}
             QPushButton:hover {{
                 background: rgba(220, 38, 38, 0.15);
-                border-color: {COLOR_RED};
-                color: {COLOR_RED};
+                border-color: {theme.color("red")};
+                color: {theme.color("red")};
             }}
         """)
-        self.delete_button.clicked.connect(lambda: self.clear_requested.emit(self._action))
-        layout.addWidget(self.delete_button)
 
 
 class ShortcutSettingsPanel(QWidget):
@@ -173,7 +179,6 @@ class ShortcutSettingsPanel(QWidget):
         super().__init__(parent)
         self._config = config
         self._buttons: dict[str, _KeyBindingButton] = {}
-        self.setStyleSheet(f"background: {COLOR_BG};")
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -190,68 +195,28 @@ class ShortcutSettingsPanel(QWidget):
         title_row = QHBoxLayout()
 
         title_col = QVBoxLayout()
-        title = QLabel("快捷键设置")
-        title.setStyleSheet(f"""
-            color: {COLOR_TEXT};
-            font-size: 32px;
-            font-weight: 900;
-            background: transparent;
-        """)
-        title_col.addWidget(title)
+        self._title = QLabel("快捷键设置")
+        title_col.addWidget(self._title)
 
         count = len(SHORTCUTS)
-        stats = QLabel(f"共 {count} 个快捷键")
-        stats.setStyleSheet(f"""
-            color: {COLOR_TEXT_DIM};
-            font-size: 13px;
-            background: transparent;
-        """)
-        title_col.addWidget(stats)
+        self._stats = QLabel(f"共 {count} 个快捷键")
+        title_col.addWidget(self._stats)
         title_row.addLayout(title_col)
         title_row.addStretch()
 
-        reset_btn = QPushButton("恢复默认")
-        reset_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        reset_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: {COLOR_WHITE};
-                color: {COLOR_BLACK};
-                border: none;
-                border-radius: 20px;
-                padding: 10px 24px;
-                font-size: 13px;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background: #e4e4e7;
-            }}
-        """)
-        reset_btn.clicked.connect(self._on_reset_all)
-        title_row.addWidget(reset_btn, alignment=Qt.AlignmentFlag.AlignBottom)
+        self._reset_btn = QPushButton("恢复默认")
+        self._reset_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._reset_btn.clicked.connect(self._on_reset_all)
+        title_row.addWidget(self._reset_btn, alignment=Qt.AlignmentFlag.AlignBottom)
 
         header_layout.addLayout(title_row)
         header_layout.addStretch()
         layout.addWidget(header)
 
         # 滚动区域
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setStyleSheet("""
-            QScrollArea { border: none; background: transparent; }
-            QScrollBar:vertical {
-                width: 6px;
-                background: transparent;
-            }
-            QScrollBar::handle:vertical {
-                background: #3f3f46;
-                border-radius: 3px;
-                min-height: 20px;
-            }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                height: 0;
-            }
-        """)
+        self._scroll = QScrollArea()
+        self._scroll.setWidgetResizable(True)
+        self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         scroll_content = QWidget()
         scroll_content.setStyleSheet("background: transparent;")
@@ -270,10 +235,56 @@ class ShortcutSettingsPanel(QWidget):
             self._buttons[action] = row.button
 
         rows_layout.addStretch()
-        scroll.setWidget(scroll_content)
-        layout.addWidget(scroll, 1)
+        self._scroll.setWidget(scroll_content)
+        layout.addWidget(self._scroll, 1)
 
         config.shortcuts_changed.connect(self._refresh_all)
+
+        self._apply_theme()
+        theme.theme_changed.connect(self._apply_theme)
+
+    def _apply_theme(self) -> None:
+        self.setStyleSheet(f"background: {theme.color('bg')};")
+        self._title.setStyleSheet(f"""
+            color: {theme.color("text")};
+            font-size: 32px;
+            font-weight: 900;
+            background: transparent;
+        """)
+        self._stats.setStyleSheet(f"""
+            color: {theme.color("text_dim")};
+            font-size: 13px;
+            background: transparent;
+        """)
+        self._reset_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: {theme.color("btn_face")};
+                color: {theme.color("btn_face_text")};
+                border: none;
+                border-radius: 20px;
+                padding: 10px 24px;
+                font-size: 13px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background: {theme.color("btn_face_hover")};
+            }}
+        """)
+        self._scroll.setStyleSheet(f"""
+            QScrollArea {{ border: none; background: transparent; }}
+            QScrollBar:vertical {{
+                width: 6px;
+                background: transparent;
+            }}
+            QScrollBar::handle:vertical {{
+                background: {theme.color("scrollbar")};
+                border-radius: 3px;
+                min-height: 20px;
+            }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+                height: 0;
+            }}
+        """)
 
     def _on_binding_changed(self, action: str, new_seq: str) -> None:
         conflict = self._config.set_binding(action, new_seq)

@@ -14,35 +14,35 @@ os.environ["PATH"] = _dll_dir + os.pathsep + os.environ.get("PATH", "")
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
-from constants import COLOR_BG, COLOR_PANEL, COLOR_TEXT, COLOR_BORDER, COLOR_ACCENT
+from theme import theme
 from main_window import MainWindow
 
 
-GLOBAL_STYLE = f"""
+def _build_global_style() -> str:
+    return f"""
     * {{
         font-family: "Microsoft YaHei UI", "Segoe UI", sans-serif;
-        color: {COLOR_TEXT};
+        color: {theme.color("text")};
     }}
     QMainWindow, #MainWindow {{
-        background-color: {COLOR_BG};
+        background-color: {theme.color("bg")};
     }}
     QToolTip {{
         background: rgba(0, 0, 0, 0.85);
         color: white;
-        border: 1px solid {COLOR_BORDER};
+        border: 1px solid {theme.color("border")};
         border-radius: 4px;
         padding: 4px 8px;
         font-size: 11px;
         font-family: 'Consolas', monospace;
     }}
-"""
+    """
 
 
 def main():
     app = QApplication(sys.argv)
     app.setApplicationName("KK Player")
     app.setStyle("Fusion")
-    app.setStyleSheet(GLOBAL_STYLE)
 
     # 数据目录
     if getattr(sys, "frozen", False):
@@ -52,6 +52,10 @@ def main():
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "data"
         )
+
+    theme.load(data_dir)
+    app.setStyleSheet(_build_global_style())
+    theme.theme_changed.connect(lambda: app.setStyleSheet(_build_global_style()))
 
     window = MainWindow(data_dir)
     window.show()

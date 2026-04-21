@@ -1,6 +1,6 @@
 {
   "version": "abc1234",
-  "download_url": "http://你的服务器IP:8080/releases/KKPlayer-setup.exe",
+  "download_url": "http://119.91.95.23:3002/releases/KKPlayer.exe",
   "changelog": "修复若干问题，提升稳定性",
   "file_size": 0
 }

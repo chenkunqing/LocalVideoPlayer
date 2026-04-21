@@ -13,15 +13,11 @@ from PySide6.QtWidgets import (
     QDialog, QLineEdit, QMenu,
 )
 
-from constants import (
-    COLOR_BG, COLOR_PANEL, COLOR_BORDER, COLOR_BORDER_HALF,
-    COLOR_ACCENT, COLOR_TEXT, COLOR_TEXT_DIM, COLOR_TEXT_DARK,
-    COLOR_PROGRESS_BG, COLOR_WHITE, COLOR_BLACK,
-    VIDEO_EXTENSIONS, PAGE_SIZE,
-)
+from constants import VIDEO_EXTENSIONS, PAGE_SIZE
 from playlist_sidebar import PlaylistSidebar
 from shortcut_config import ShortcutConfig
 from shortcut_settings import ShortcutSettingsPanel
+from theme import theme
 from update_dialog import UpdateDialog
 from updater import UpdateConfig
 from video_library import VideoLibrary
@@ -30,7 +26,7 @@ from utils import format_time
 
 
 class _VideoRow(QWidget):
-    """视频列表行 — 复刻 index.html 的行结构"""
+    """视频列表行"""
     clicked = Signal(str)
 
     def __init__(self, index: int, item: VideoItem, thumbnail_path: str | None = None, parent=None):
@@ -44,6 +40,7 @@ class _VideoRow(QWidget):
         self.setFixedHeight(56)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setAttribute(Qt.WidgetAttribute.WA_Hover)
+        theme.theme_changed.connect(self.update)
 
     def paintEvent(self, event):
         p = QPainter(self)
@@ -52,7 +49,7 @@ class _VideoRow(QWidget):
 
         # hover 背景
         if self._hovered:
-            p.setBrush(QColor(63, 63, 70, 80))
+            p.setBrush(QColor(theme.color("hover")))
             p.setPen(Qt.PenStyle.NoPen)
             p.drawRoundedRect(0, 0, w, h, 8, 8)
 
@@ -66,7 +63,7 @@ class _VideoRow(QWidget):
         x_offset = 16
 
         # 序号
-        p.setPen(QColor(COLOR_ACCENT if self._hovered else COLOR_TEXT_DARK))
+        p.setPen(QColor(theme.color("accent") if self._hovered else theme.color("text_dark")))
         font = p.font()
         font.setPixelSize(13)
         p.setFont(font)
@@ -92,13 +89,13 @@ class _VideoRow(QWidget):
             p.drawPixmap(x_offset, thumb_y, scaled, dx, dy, 40, 40)
             p.restore()
         else:
-            p.setBrush(QColor(COLOR_PROGRESS_BG))
+            p.setBrush(QColor(theme.color("progress_bg")))
             p.setPen(Qt.PenStyle.NoPen)
             p.drawRoundedRect(x_offset, thumb_y, 40, 40, 4, 4)
 
         # 播放三角（hover 时显示在缩略图上）
         if self._hovered:
-            p.setBrush(QColor(COLOR_WHITE))
+            p.setBrush(QColor(theme.color("white")))
             tri = QPainterPath()
             tcx, tcy = x_offset + 20, thumb_y + 20
             tri.moveTo(tcx - 5, tcy - 6)
@@ -110,7 +107,7 @@ class _VideoRow(QWidget):
         x_offset += 52
 
         # 文件名 + 格式
-        p.setPen(QColor(COLOR_TEXT))
+        p.setPen(QColor(theme.color("text")))
         font.setPixelSize(13)
         font.setBold(True)
         p.setFont(font)
@@ -120,7 +117,7 @@ class _VideoRow(QWidget):
         p.drawText(x_offset, 0, int(col2_w - 60), h // 2,
                     Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignLeft, name_text)
 
-        p.setPen(QColor(COLOR_TEXT_DARK))
+        p.setPen(QColor(theme.color("text_dark")))
         font.setPixelSize(10)
         font.setBold(False)
         p.setFont(font)
@@ -131,7 +128,7 @@ class _VideoRow(QWidget):
         x_offset += int(col2_w)
 
         # 文件夹
-        p.setPen(QColor(COLOR_TEXT_DIM))
+        p.setPen(QColor(theme.color("text_dim")))
         font.setPixelSize(12)
         p.setFont(font)
         folder_text = p.fontMetrics().elidedText(
@@ -141,7 +138,7 @@ class _VideoRow(QWidget):
         x_offset += int(col3_w)
 
         # 时长
-        p.setPen(QColor(COLOR_TEXT_DIM))
+        p.setPen(QColor(theme.color("text_dim")))
         font.setPixelSize(12)
         p.setFont(font)
         dur = format_time(self._item.duration) if self._item.duration > 0 else "--:--"
@@ -169,6 +166,7 @@ class _ListHeader(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFixedHeight(32)
+        theme.theme_changed.connect(self.update)
 
     def paintEvent(self, event):
         p = QPainter(self)
@@ -182,7 +180,7 @@ class _ListHeader(QWidget):
         col3_w = remaining * 0.4
         x_offset = 16
 
-        p.setPen(QColor(COLOR_TEXT_DARK))
+        p.setPen(QColor(theme.color("text_dark")))
         font = p.font()
         font.setPixelSize(10)
         font.setBold(True)
@@ -198,7 +196,7 @@ class _ListHeader(QWidget):
                     Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight, "时长")
 
         # 底部分割线
-        p.setPen(QPen(QColor(COLOR_BORDER), 1))
+        p.setPen(QPen(QColor(theme.color("border")), 1))
         p.drawLine(16, h - 1, w - 16, h - 1)
         p.end()
 
@@ -219,6 +217,7 @@ class _PlaylistCard(QWidget):
         self.setMaximumHeight(self.CARD_HEIGHT)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setAttribute(Qt.WidgetAttribute.WA_Hover)
+        theme.theme_changed.connect(self.update)
 
     def paintEvent(self, event):
         p = QPainter(self)
@@ -226,9 +225,11 @@ class _PlaylistCard(QWidget):
         w, h = self.width(), self.height()
 
         # 卡片背景
-        bg_alpha = 96 if self._hovered else 64
-        p.setBrush(QColor(63, 63, 70, bg_alpha))
-        p.setPen(QPen(QColor(COLOR_BORDER), 1))
+        if self._hovered:
+            p.setBrush(QColor(theme.color("hover_strong")))
+        else:
+            p.setBrush(QColor(theme.color("hover")))
+        p.setPen(QPen(QColor(theme.color("border")), 1))
         p.drawRoundedRect(1, 1, w - 2, h - 2, 16, 16)
 
         # 渐变图标方块
@@ -255,10 +256,10 @@ class _PlaylistCard(QWidget):
         # hover 时右上角播放按钮
         if self._hovered:
             btn_x, btn_y, btn_r = w - 56, 20, 36
-            p.setBrush(QColor(COLOR_WHITE))
+            p.setBrush(QColor(theme.color("btn_face")))
             p.setPen(Qt.PenStyle.NoPen)
             p.drawEllipse(btn_x, btn_y, btn_r, btn_r)
-            p.setBrush(QColor(COLOR_BLACK))
+            p.setBrush(QColor(theme.color("btn_face_text")))
             play = QPainterPath()
             pcx, pcy = btn_x + btn_r // 2, btn_y + btn_r // 2
             play.moveTo(pcx - 5, pcy - 7)
@@ -268,7 +269,7 @@ class _PlaylistCard(QWidget):
             p.drawPath(play)
 
         # 列表名称
-        p.setPen(QColor(COLOR_TEXT))
+        p.setPen(QColor(theme.color("text")))
         font = p.font()
         font.setPixelSize(16)
         font.setBold(True)
@@ -278,7 +279,7 @@ class _PlaylistCard(QWidget):
         p.drawText(20, 92, w - 40, 24, Qt.AlignmentFlag.AlignVCenter, name_elided)
 
         # 统计信息
-        p.setPen(QColor(COLOR_TEXT_DIM))
+        p.setPen(QColor(theme.color("text_dim")))
         font.setPixelSize(12)
         font.setBold(False)
         p.setFont(font)
@@ -317,11 +318,11 @@ class _PlaylistCard(QWidget):
         menu = QMenu(self)
         menu.setStyleSheet(f"""
             QMenu {{
-                background: {COLOR_PANEL}; color: {COLOR_TEXT};
-                border: 1px solid {COLOR_BORDER}; border-radius: 6px; padding: 4px;
+                background: {theme.color("panel")}; color: {theme.color("text")};
+                border: 1px solid {theme.color("border")}; border-radius: 6px; padding: 4px;
             }}
             QMenu::item {{ padding: 6px 24px; border-radius: 4px; }}
-            QMenu::item:selected {{ background: {COLOR_ACCENT}; }}
+            QMenu::item:selected {{ background: {theme.color("accent")}; }}
         """)
         delete_action = menu.addAction("删除播放列表")
         action = menu.exec(event.globalPos())
@@ -348,8 +349,8 @@ class _CreatePlaylistDialog(QDialog):
         frame.setObjectName("dialogFrame")
         frame.setStyleSheet(f"""
             #dialogFrame {{
-                background: {COLOR_PANEL};
-                border: 1px solid {COLOR_BORDER};
+                background: {theme.color("panel")};
+                border: 1px solid {theme.color("border")};
                 border-radius: 12px;
             }}
         """)
@@ -362,7 +363,9 @@ class _CreatePlaylistDialog(QDialog):
         # 自定义标题栏
         title_row = QHBoxLayout()
         title_label = QLabel("创建新列表")
-        title_label.setStyleSheet(f"color: {COLOR_TEXT}; font-size: 15px; font-weight: bold; background: transparent;")
+        title_label.setStyleSheet(
+            f"color: {theme.color('text')}; font-size: 15px; font-weight: bold; background: transparent;"
+        )
         title_row.addWidget(title_label)
         title_row.addStretch()
         close_btn = QPushButton("✕")
@@ -371,12 +374,12 @@ class _CreatePlaylistDialog(QDialog):
         close_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent;
-                color: {COLOR_TEXT_DIM};
+                color: {theme.color("text_dim")};
                 border: none;
                 border-radius: 14px;
                 font-size: 14px;
             }}
-            QPushButton:hover {{ background: rgba(63, 63, 70, 0.8); color: {COLOR_TEXT}; }}
+            QPushButton:hover {{ background: {theme.color("hover_strong")}; color: {theme.color("text")}; }}
         """)
         close_btn.clicked.connect(self.reject)
         title_row.addWidget(close_btn)
@@ -386,18 +389,18 @@ class _CreatePlaylistDialog(QDialog):
         self.name_input.setPlaceholderText("输入播放列表名称...")
         self.name_input.setStyleSheet(f"""
             QLineEdit {{
-                background: {COLOR_BG};
-                border: 1px solid {COLOR_PROGRESS_BG};
+                background: {theme.color("bg")};
+                border: 1px solid {theme.color("progress_bg")};
                 border-radius: 8px;
                 padding: 10px 16px;
                 font-size: 13px;
-                color: {COLOR_TEXT};
+                color: {theme.color("text")};
             }}
             QLineEdit::placeholder {{
-                color: {COLOR_TEXT_DARK};
+                color: {theme.color("text_dark")};
             }}
             QLineEdit:focus {{
-                border-color: {COLOR_ACCENT};
+                border-color: {theme.color("accent")};
             }}
         """)
         layout.addWidget(self.name_input)
@@ -410,13 +413,13 @@ class _CreatePlaylistDialog(QDialog):
         cancel_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent;
-                color: {COLOR_TEXT_DIM};
-                border: 1px solid {COLOR_PROGRESS_BG};
+                color: {theme.color("text_dim")};
+                border: 1px solid {theme.color("progress_bg")};
                 border-radius: 8px;
                 padding: 8px 20px;
                 font-size: 13px;
             }}
-            QPushButton:hover {{ background: rgba(63, 63, 70, 0.5); }}
+            QPushButton:hover {{ background: {theme.color("hover")}; }}
         """)
         cancel_btn.clicked.connect(self.reject)
         btn_row.addWidget(cancel_btn)
@@ -425,15 +428,15 @@ class _CreatePlaylistDialog(QDialog):
         ok_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         ok_btn.setStyleSheet(f"""
             QPushButton {{
-                background: {COLOR_ACCENT};
-                color: {COLOR_WHITE};
+                background: {theme.color("accent")};
+                color: {theme.color("white")};
                 border: none;
                 border-radius: 8px;
                 padding: 8px 20px;
                 font-size: 13px;
                 font-weight: bold;
             }}
-            QPushButton:hover {{ background: #7c3aed; }}
+            QPushButton:hover {{ background: {theme.color("accent_dark")}; }}
         """)
         ok_btn.clicked.connect(self.accept)
         btn_row.addWidget(ok_btn)
@@ -464,7 +467,6 @@ class PlaylistView(QWidget):
         self._current_playlist_id: str | None = None
         self._displayed: list[VideoItem] = []
 
-        self.setStyleSheet(f"background: {COLOR_BG};")
         self.setAcceptDrops(True)
 
         layout = QHBoxLayout(self)
@@ -501,36 +503,14 @@ class PlaylistView(QWidget):
         self._back_btn = QPushButton("←")
         self._back_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._back_btn.setFixedSize(36, 36)
-        self._back_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: rgba(63, 63, 70, 0.5);
-                color: {COLOR_TEXT};
-                border: none;
-                border-radius: 18px;
-                font-size: 18px;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{ background: rgba(63, 63, 70, 0.8); }}
-        """)
         self._back_btn.clicked.connect(self.go_back_to_playlist_grid)
         self._back_btn.hide()
         title_row.addWidget(self._back_btn, alignment=Qt.AlignmentFlag.AlignTop)
 
         title_col = QVBoxLayout()
         self._title = QLabel("本地视频库")
-        self._title.setStyleSheet(f"""
-            color: {COLOR_TEXT};
-            font-size: 32px;
-            font-weight: 900;
-            background: transparent;
-        """)
         title_col.addWidget(self._title)
         self._stats = QLabel("共 0 个视频")
-        self._stats.setStyleSheet(f"""
-            color: {COLOR_TEXT_DIM};
-            font-size: 13px;
-            background: transparent;
-        """)
         title_col.addWidget(self._stats)
         title_row.addLayout(title_col)
         title_row.addStretch()
@@ -538,20 +518,6 @@ class PlaylistView(QWidget):
         # 添加文件夹按钮
         self._add_btn = QPushButton("添加文件夹")
         self._add_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self._add_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: {COLOR_WHITE};
-                color: {COLOR_BLACK};
-                border: none;
-                border-radius: 20px;
-                padding: 10px 24px;
-                font-size: 13px;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background: #e4e4e7;
-            }}
-        """)
         self._add_btn.clicked.connect(self._on_add_folder)
         title_row.addWidget(self._add_btn, alignment=Qt.AlignmentFlag.AlignBottom)
 
@@ -568,21 +534,6 @@ class PlaylistView(QWidget):
         self._video_scroll = QScrollArea()
         self._video_scroll.setWidgetResizable(True)
         self._video_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self._video_scroll.setStyleSheet("""
-            QScrollArea { border: none; background: transparent; }
-            QScrollBar:vertical {
-                width: 6px;
-                background: transparent;
-            }
-            QScrollBar::handle:vertical {
-                background: #3f3f46;
-                border-radius: 3px;
-                min-height: 20px;
-            }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                height: 0;
-            }
-        """)
 
         self._list_container = QWidget()
         self._list_container.setStyleSheet("background: transparent;")
@@ -597,12 +548,6 @@ class PlaylistView(QWidget):
         # 空状态提示
         self._empty_label = QLabel("点击「添加文件夹」或拖拽视频文件到此处")
         self._empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._empty_label.setStyleSheet(f"""
-            color: {COLOR_TEXT_DARK};
-            font-size: 14px;
-            background: transparent;
-            padding: 80px;
-        """)
         self._empty_label.hide()
         main_layout.addWidget(self._empty_label)
 
@@ -610,16 +555,6 @@ class PlaylistView(QWidget):
         self._playlist_grid_scroll = QScrollArea()
         self._playlist_grid_scroll.setWidgetResizable(True)
         self._playlist_grid_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self._playlist_grid_scroll.setStyleSheet("""
-            QScrollArea { border: none; background: transparent; }
-            QScrollBar:vertical {
-                width: 6px; background: transparent;
-            }
-            QScrollBar::handle:vertical {
-                background: #3f3f46; border-radius: 3px; min-height: 20px;
-            }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
-        """)
         self._playlist_grid_container = QWidget()
         self._playlist_grid_container.setStyleSheet("background: transparent;")
         self._playlist_grid_layout = QGridLayout(self._playlist_grid_container)
@@ -632,12 +567,6 @@ class PlaylistView(QWidget):
         # 播放列表空状态
         self._playlist_empty_label = QLabel("还没有播放列表，点击「创建新列表」开始")
         self._playlist_empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._playlist_empty_label.setStyleSheet(f"""
-            color: {COLOR_TEXT_DARK};
-            font-size: 14px;
-            background: transparent;
-            padding: 80px;
-        """)
         self._playlist_empty_label.hide()
         main_layout.addWidget(self._playlist_empty_label)
 
@@ -656,10 +585,77 @@ class PlaylistView(QWidget):
         self._library.recent_changed.connect(self._refresh_recent)
         self._library.playlists_changed.connect(self._refresh)
 
+        self._apply_theme()
+        theme.theme_changed.connect(self._apply_theme)
+
         # 初始扫描
         if self._library.folders:
             self._library.rescan()
         self._refresh_recent()
+
+    def _apply_theme(self) -> None:
+        self.setStyleSheet(f"background: {theme.color('bg')};")
+        self._back_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: {theme.color("hover")};
+                color: {theme.color("text")};
+                border: none;
+                border-radius: 18px;
+                font-size: 18px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{ background: {theme.color("hover_strong")}; }}
+        """)
+        self._title.setStyleSheet(f"""
+            color: {theme.color("text")};
+            font-size: 32px;
+            font-weight: 900;
+            background: transparent;
+        """)
+        self._stats.setStyleSheet(f"""
+            color: {theme.color("text_dim")};
+            font-size: 13px;
+            background: transparent;
+        """)
+        self._add_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: {theme.color("btn_face")};
+                color: {theme.color("btn_face_text")};
+                border: none;
+                border-radius: 20px;
+                padding: 10px 24px;
+                font-size: 13px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background: {theme.color("btn_face_hover")};
+            }}
+        """)
+        scroll_style = f"""
+            QScrollArea {{ border: none; background: transparent; }}
+            QScrollBar:vertical {{
+                width: 6px;
+                background: transparent;
+            }}
+            QScrollBar::handle:vertical {{
+                background: {theme.color("scrollbar")};
+                border-radius: 3px;
+                min-height: 20px;
+            }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+                height: 0;
+            }}
+        """
+        self._video_scroll.setStyleSheet(scroll_style)
+        self._playlist_grid_scroll.setStyleSheet(scroll_style)
+        empty_style = f"""
+            color: {theme.color("text_dark")};
+            font-size: 14px;
+            background: transparent;
+            padding: 80px;
+        """
+        self._empty_label.setStyleSheet(empty_style)
+        self._playlist_empty_label.setStyleSheet(empty_style)
 
     def _on_nav_changed(self, key: str):
         self._nav_mode = key

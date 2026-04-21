@@ -10,7 +10,7 @@ import urllib.error
 
 from PySide6.QtCore import QThread, Signal
 
-from constants import UPDATE_CONFIG_FILE
+from constants import UPDATE_CONFIG_FILE, UPDATE_SERVER_URL
 from version import get_version
 
 
@@ -42,7 +42,7 @@ class UpdateConfig:
 
     @property
     def server_url(self) -> str:
-        return self._data.get("server_url", "")
+        return self._data.get("server_url", "") or UPDATE_SERVER_URL
 
     @server_url.setter
     def server_url(self, value: str) -> None:
@@ -101,7 +101,7 @@ class UpdateDownloader(QThread):
             with urllib.request.urlopen(req, timeout=30) as resp:
                 total = int(resp.headers.get("Content-Length", 0))
                 tmp_dir = tempfile.gettempdir()
-                dest = os.path.join(tmp_dir, "KKPlayer-setup.exe")
+                dest = os.path.join(tmp_dir, "KKPlayer_update.exe")
                 downloaded = 0
                 chunk_size = 65536
 
@@ -123,10 +123,23 @@ class UpdateDownloader(QThread):
                 self.download_failed.emit(f"下载失败：{e}")
 
 
-def launch_installer_and_quit(installer_path: str) -> None:
-    """启动安装包并退出当前应用"""
+def replace_and_restart(new_exe_path: str) -> None:
+    """通过批处理脚本替换当前 exe 并重启（Windows 无法覆盖运行中的 exe）"""
+    current_exe = sys.executable
+    bat_path = os.path.join(tempfile.gettempdir(), "kkplayer_update.bat")
+
+    script = f"""@echo off
+ping 127.0.0.1 -n 3 >nul
+copy /y "{new_exe_path}" "{current_exe}"
+del "{new_exe_path}"
+start "" "{current_exe}"
+del "%~f0"
+"""
+    with open(bat_path, "w", encoding="gbk") as f:
+        f.write(script)
+
     subprocess.Popen(
-        [installer_path],
+        ["cmd", "/c", bat_path],
         creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
     )
     from PySide6.QtWidgets import QApplication

@@ -10,16 +10,14 @@ from PySide6.QtWidgets import (
     QSlider, QMenu, QGraphicsOpacityEffect, QSizePolicy, QSpacerItem,
 )
 
-from constants import (
-    COLOR_ACCENT, COLOR_ACCENT_DARK, COLOR_TEXT, COLOR_TEXT_DIM,
-    COLOR_PANEL, COLOR_BORDER, SPEED_OPTIONS, SHORTCUTS,
-)
+from constants import SPEED_OPTIONS, SHORTCUTS
 from progress_bar import VideoProgressBar
+from theme import theme
 from utils import format_time
 
 
 class _GradientWidget(QWidget):
-    """带渐变背景的容器"""
+    """带渐变背景的容器（浮动在视频上方，始终使用深色渐变）"""
 
     def __init__(self, direction="bottom", parent=None):
         super().__init__(parent)
@@ -51,15 +49,19 @@ class _IconButton(QPushButton):
         self._icon_type = icon_type
         self.setFixedSize(size, size)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.setStyleSheet("""
-            QPushButton {
+        self._apply_theme()
+        theme.theme_changed.connect(self._apply_theme)
+
+    def _apply_theme(self) -> None:
+        self.setStyleSheet(f"""
+            QPushButton {{
                 background: transparent;
                 border: none;
                 border-radius: 8px;
-            }
-            QPushButton:hover {
-                background: rgba(39, 39, 42, 0.6);
-            }
+            }}
+            QPushButton:hover {{
+                background: {theme.color("hover")};
+            }}
         """)
 
     def set_icon_type(self, icon_type):
@@ -70,7 +72,7 @@ class _IconButton(QPushButton):
         super().paintEvent(event)
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        p.setPen(QPen(QColor(COLOR_TEXT), 2))
+        p.setPen(QPen(QColor(theme.color("text")), 2))
         p.setBrush(Qt.BrushStyle.NoBrush)
 
         cx, cy = self.width() // 2, self.height() // 2
@@ -82,26 +84,26 @@ class _IconButton(QPushButton):
             path.lineTo(cx + 7, cy)
             path.lineTo(cx - 5, cy + 7)
             path.closeSubpath()
-            p.setBrush(QColor(COLOR_TEXT))
+            p.setBrush(QColor(theme.color("text")))
             p.setPen(Qt.PenStyle.NoPen)
             p.drawPath(path)
         elif self._icon_type == "pause":
-            p.setBrush(QColor(COLOR_TEXT))
+            p.setBrush(QColor(theme.color("text")))
             p.setPen(Qt.PenStyle.NoPen)
             p.drawRoundedRect(cx - 6, cy - 7, 4, 14, 1, 1)
             p.drawRoundedRect(cx + 2, cy - 7, 4, 14, 1, 1)
         elif self._icon_type == "skip_back":
-            p.setPen(QPen(QColor(COLOR_TEXT), 2))
+            p.setPen(QPen(QColor(theme.color("text")), 2))
             p.drawLine(cx + 4, cy - 5, cx - 2, cy)
             p.drawLine(cx - 2, cy, cx + 4, cy + 5)
             p.drawLine(cx - 4, cy - 5, cx - 4, cy + 5)
         elif self._icon_type == "skip_forward":
-            p.setPen(QPen(QColor(COLOR_TEXT), 2))
+            p.setPen(QPen(QColor(theme.color("text")), 2))
             p.drawLine(cx - 4, cy - 5, cx + 2, cy)
             p.drawLine(cx + 2, cy, cx - 4, cy + 5)
             p.drawLine(cx + 4, cy - 5, cx + 4, cy + 5)
         elif self._icon_type == "volume_high":
-            p.setPen(QPen(QColor(COLOR_TEXT), 1.5))
+            p.setPen(QPen(QColor(theme.color("text")), 1.5))
             p.drawLine(cx - 6, cy - 3, cx - 3, cy - 3)
             p.drawLine(cx - 3, cy - 3, cx + 1, cy - 6)
             p.drawLine(cx + 1, cy - 6, cx + 1, cy + 6)
@@ -111,32 +113,31 @@ class _IconButton(QPushButton):
             p.setBrush(Qt.BrushStyle.NoBrush)
             p.drawArc(cx + 2, cy - 4, 6, 8, -60 * 16, 120 * 16)
         elif self._icon_type == "volume_mute":
-            p.setPen(QPen(QColor(COLOR_TEXT), 1.5))
+            p.setPen(QPen(QColor(theme.color("text")), 1.5))
             p.drawLine(cx - 6, cy - 3, cx - 3, cy - 3)
             p.drawLine(cx - 3, cy - 3, cx + 1, cy - 6)
             p.drawLine(cx + 1, cy - 6, cx + 1, cy + 6)
             p.drawLine(cx + 1, cy + 6, cx - 3, cy + 3)
             p.drawLine(cx - 3, cy + 3, cx - 6, cy + 3)
             p.drawLine(cx - 6, cy + 3, cx - 6, cy - 3)
-            p.setPen(QPen(QColor(COLOR_TEXT), 2))
+            p.setPen(QPen(QColor(theme.color("text")), 2))
             p.drawLine(cx + 4, cy - 4, cx + 9, cy + 4)
             p.drawLine(cx + 9, cy - 4, cx + 4, cy + 4)
         elif self._icon_type == "fullscreen":
-            p.setPen(QPen(QColor(COLOR_TEXT), 2))
+            p.setPen(QPen(QColor(theme.color("text")), 2))
             for dx, dy in [(-1, -1), (1, -1), (-1, 1), (1, 1)]:
                 x0, y0 = cx + dx * 7, cy + dy * 7
                 p.drawLine(x0, y0, x0 - dx * 5, y0)
                 p.drawLine(x0, y0, x0, y0 - dy * 5)
         elif self._icon_type == "fullscreen_exit":
-            p.setPen(QPen(QColor(COLOR_TEXT), 2))
+            p.setPen(QPen(QColor(theme.color("text")), 2))
             for dx, dy in [(-1, -1), (1, -1), (-1, 1), (1, 1)]:
                 x0, y0 = cx + dx * 3, cy + dy * 3
                 p.drawLine(x0, y0, x0 + dx * 5, y0)
                 p.drawLine(x0, y0, x0, y0 + dy * 5)
         elif self._icon_type == "keyframe_add":
             p.setPen(Qt.PenStyle.NoPen)
-            p.setBrush(QColor(COLOR_ACCENT))
-            # 菱形
+            p.setBrush(QColor(theme.color("accent")))
             path = QPainterPath()
             path.moveTo(cx, cy - 7)
             path.lineTo(cx + 6, cy)
@@ -144,17 +145,16 @@ class _IconButton(QPushButton):
             path.lineTo(cx - 6, cy)
             path.closeSubpath()
             p.drawPath(path)
-            # 加号
-            p.setPen(QPen(QColor(COLOR_TEXT), 2))
+            p.setPen(QPen(QColor(theme.color("text")), 2))
             p.drawLine(cx - 3, cy, cx + 3, cy)
             p.drawLine(cx, cy - 3, cx, cy + 3)
         elif self._icon_type == "keyframe_prev":
-            p.setPen(QPen(QColor(COLOR_ACCENT), 2))
+            p.setPen(QPen(QColor(theme.color("accent")), 2))
             p.drawLine(cx + 3, cy - 5, cx - 3, cy)
             p.drawLine(cx - 3, cy, cx + 3, cy + 5)
             p.drawLine(cx - 4, cy - 5, cx - 4, cy + 5)
         elif self._icon_type == "keyframe_next":
-            p.setPen(QPen(QColor(COLOR_ACCENT), 2))
+            p.setPen(QPen(QColor(theme.color("accent")), 2))
             p.drawLine(cx - 3, cy - 5, cx + 3, cy)
             p.drawLine(cx + 3, cy, cx - 3, cy + 5)
             p.drawLine(cx + 4, cy - 5, cx + 4, cy + 5)
@@ -180,7 +180,7 @@ class ControlsOverlay(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # 顶部信息栏
+        # 顶部信息栏（浮动在视频上方，始终深色文字）
         self._top_bar = _GradientWidget("top")
         self._top_bar.setFixedHeight(80)
         self._top_bar.setMouseTracking(True)
@@ -193,9 +193,9 @@ class ControlsOverlay(QWidget):
         top_layout = QVBoxLayout(self._top_bar)
         top_layout.setContentsMargins(24, 12, 24, 0)
         self._title_label = QLabel("KK Player")
-        self._title_label.setStyleSheet(f"color: {COLOR_TEXT}; font-size: 18px; font-weight: bold; background: transparent;")
+        self._title_label.setStyleSheet("color: #fafafa; font-size: 18px; font-weight: bold; background: transparent;")
         self._meta_label = QLabel("拖拽视频文件到此处开始播放")
-        self._meta_label.setStyleSheet(f"color: {COLOR_TEXT_DIM}; font-size: 12px; background: transparent;")
+        self._meta_label.setStyleSheet("color: #71717a; font-size: 12px; background: transparent;")
         top_layout.addWidget(self._title_label)
         top_layout.addWidget(self._meta_label)
         layout.addWidget(self._top_bar)
@@ -208,9 +208,8 @@ class ControlsOverlay(QWidget):
         self._center.setMouseTracking(True)
         layout.addWidget(self._center, 1)
 
-        # 底部控制栏（独立于视频区域，不使用渐变）
+        # 底部控制栏（独立于视频区域）
         self._bottom_bar = QWidget()
-        self._bottom_bar.setStyleSheet(f"background-color: {COLOR_PANEL};")
         self._bottom_bar.setFixedHeight(110)
         self._bottom_bar.setMouseTracking(True)
         bottom_layout = QVBoxLayout(self._bottom_bar)
@@ -250,35 +249,10 @@ class ControlsOverlay(QWidget):
         self._vol_slider.setRange(0, 100)
         self._vol_slider.setValue(100)
         self._vol_slider.setFixedWidth(80)
-        self._vol_slider.setStyleSheet(f"""
-            QSlider::groove:horizontal {{
-                background: {COLOR_BORDER};
-                height: 4px;
-                border-radius: 2px;
-            }}
-            QSlider::handle:horizontal {{
-                background: white;
-                width: 12px;
-                height: 12px;
-                margin: -4px 0;
-                border-radius: 6px;
-            }}
-            QSlider::sub-page:horizontal {{
-                background: {COLOR_TEXT_DIM};
-                border-radius: 2px;
-            }}
-        """)
         btn_row.addWidget(self._vol_slider)
 
         # 时间标签
         self._time_label = QLabel("0:00 / 0:00")
-        self._time_label.setStyleSheet(f"""
-            color: {COLOR_TEXT_DIM};
-            font-size: 12px;
-            font-family: 'Consolas', 'Courier New', monospace;
-            background: transparent;
-            padding-left: 8px;
-        """)
         btn_row.addWidget(self._time_label)
 
         btn_row.addStretch()
@@ -293,36 +267,7 @@ class ControlsOverlay(QWidget):
         self._speed_btn.setToolTip(f"播放倍速 ({SHORTCUTS['speed_down']}/{SHORTCUTS['speed_up']})")
         self._speed_btn.setFixedSize(48, 32)
         self._speed_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self._speed_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: transparent;
-                border: none;
-                border-radius: 6px;
-                color: {COLOR_TEXT};
-                font-size: 12px;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background: rgba(39, 39, 42, 0.6);
-            }}
-        """)
         self._speed_menu = QMenu(self)
-        self._speed_menu.setStyleSheet(f"""
-            QMenu {{
-                background: rgba(24, 24, 27, 0.95);
-                border: 1px solid {COLOR_BORDER};
-                border-radius: 8px;
-                padding: 4px 0;
-            }}
-            QMenu::item {{
-                padding: 6px 16px;
-                color: {COLOR_TEXT};
-                font-size: 12px;
-            }}
-            QMenu::item:selected {{
-                background: rgba(39, 39, 42, 0.8);
-            }}
-        """)
         for spd in SPEED_OPTIONS:
             action = self._speed_menu.addAction(f"{spd}x")
             action.setData(spd)
@@ -336,6 +281,66 @@ class ControlsOverlay(QWidget):
         btn_row.addWidget(self._fs_btn)
 
         bottom_layout.addLayout(btn_row)
+
+        self._apply_theme()
+        theme.theme_changed.connect(self._apply_theme)
+
+    def _apply_theme(self) -> None:
+        self._bottom_bar.setStyleSheet(f"background-color: {theme.color('panel')};")
+        self._vol_slider.setStyleSheet(f"""
+            QSlider::groove:horizontal {{
+                background: {theme.color("border")};
+                height: 4px;
+                border-radius: 2px;
+            }}
+            QSlider::handle:horizontal {{
+                background: white;
+                width: 12px;
+                height: 12px;
+                margin: -4px 0;
+                border-radius: 6px;
+            }}
+            QSlider::sub-page:horizontal {{
+                background: {theme.color("text_dim")};
+                border-radius: 2px;
+            }}
+        """)
+        self._time_label.setStyleSheet(f"""
+            color: {theme.color("text_dim")};
+            font-size: 12px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            background: transparent;
+            padding-left: 8px;
+        """)
+        self._speed_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent;
+                border: none;
+                border-radius: 6px;
+                color: {theme.color("text")};
+                font-size: 12px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background: {theme.color("hover")};
+            }}
+        """)
+        self._speed_menu.setStyleSheet(f"""
+            QMenu {{
+                background: {theme.color("menu_bg")};
+                border: 1px solid {theme.color("border")};
+                border-radius: 8px;
+                padding: 4px 0;
+            }}
+            QMenu::item {{
+                padding: 6px 16px;
+                color: {theme.color("text")};
+                font-size: 12px;
+            }}
+            QMenu::item:selected {{
+                background: {theme.color("hover_strong")};
+            }}
+        """)
 
     # region 公开接口
 

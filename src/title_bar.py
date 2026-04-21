@@ -4,10 +4,8 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPainter, QColor, QPen, QPainterPath
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
 
-from constants import (
-    COLOR_PANEL, COLOR_BORDER_HALF, COLOR_ACCENT, COLOR_TEXT,
-    COLOR_TEXT_DIM, COLOR_RED, TITLE_BAR_HEIGHT,
-)
+from constants import TITLE_BAR_HEIGHT
+from theme import theme
 
 
 class _WinButton(QPushButton):
@@ -18,22 +16,26 @@ class _WinButton(QPushButton):
         self._type = btn_type
         self.setFixedSize(46, TITLE_BAR_HEIGHT)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        if btn_type == "close":
+        self._apply_theme()
+        theme.theme_changed.connect(self._apply_theme)
+
+    def _apply_theme(self) -> None:
+        if self._type == "close":
             self.setStyleSheet(f"""
                 QPushButton {{ background: transparent; border: none; }}
-                QPushButton:hover {{ background: {COLOR_RED}; }}
+                QPushButton:hover {{ background: {theme.color("red")}; }}
             """)
         else:
-            self.setStyleSheet("""
-                QPushButton { background: transparent; border: none; }
-                QPushButton:hover { background: #27272a; }
+            self.setStyleSheet(f"""
+                QPushButton {{ background: transparent; border: none; }}
+                QPushButton:hover {{ background: {theme.color("hover")}; }}
             """)
 
     def paintEvent(self, event):
         super().paintEvent(event)
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        p.setPen(QPen(QColor(COLOR_TEXT), 1))
+        p.setPen(QPen(QColor(theme.color("text")), 1))
         cx, cy = self.width() // 2, self.height() // 2
 
         if self._type == "minimize":
@@ -65,6 +67,7 @@ class _WinButton(QPushButton):
 
     def set_type(self, btn_type):
         self._type = btn_type
+        self._apply_theme()
         self.update()
 
 
@@ -77,28 +80,19 @@ class TitleBar(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFixedHeight(TITLE_BAR_HEIGHT)
-        self.setStyleSheet(f"background: {COLOR_PANEL}; border-bottom: 1px solid {COLOR_BORDER_HALF};")
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(16, 0, 0, 0)
         layout.setSpacing(0)
 
         # 图标
-        icon_label = QLabel("▶")
-        icon_label.setStyleSheet(f"color: {COLOR_ACCENT}; font-size: 14px; background: transparent;")
-        layout.addWidget(icon_label)
+        self._icon_label = QLabel("▶")
+        layout.addWidget(self._icon_label)
 
         layout.addSpacing(8)
 
         # 标题
         self._title = QLabel("KK Player")
-        self._title.setStyleSheet(f"""
-            color: {COLOR_TEXT_DIM};
-            font-size: 10px;
-            font-weight: bold;
-            letter-spacing: -0.5px;
-            background: transparent;
-        """)
         layout.addWidget(self._title)
 
         layout.addStretch()
@@ -121,6 +115,24 @@ class TitleBar(QWidget):
         layout.addWidget(self._min_btn)
         layout.addWidget(self._max_btn)
         layout.addWidget(self._close_btn)
+
+        self._apply_theme()
+        theme.theme_changed.connect(self._apply_theme)
+
+    def _apply_theme(self) -> None:
+        self.setStyleSheet(
+            f"background: {theme.color('panel')}; border-bottom: 1px solid {theme.color('border_half')};"
+        )
+        self._icon_label.setStyleSheet(
+            f"color: {theme.color('accent')}; font-size: 14px; background: transparent;"
+        )
+        self._title.setStyleSheet(f"""
+            color: {theme.color("text_dim")};
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: -0.5px;
+            background: transparent;
+        """)
 
     def set_mode(self, mode: str):
         """切换标题栏模式: 'library' 隐藏返回按钮, 'player' 显示返回按钮"""

@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt, Signal, QRectF, QPointF
 from PySide6.QtGui import QPainter, QColor, QPen, QPainterPath, QBrush
 from PySide6.QtWidgets import QWidget, QToolTip
 
-from constants import COLOR_ACCENT, COLOR_ACCENT_LIGHT, COLOR_PROGRESS_BG, COLOR_WHITE
+from theme import theme
 from utils import format_time
 
 
@@ -24,6 +24,7 @@ class VideoProgressBar(QWidget):
         self.setFixedHeight(24)
         self.setMouseTracking(True)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
+        theme.theme_changed.connect(self.update)
 
     def set_position(self, seconds):
         if not self._dragging:
@@ -60,7 +61,7 @@ class VideoProgressBar(QWidget):
         radius = bar_h / 2
 
         # 轨道背景
-        bg_color = QColor(COLOR_PROGRESS_BG)
+        bg_color = QColor(theme.color("progress_bg"))
         bg_color.setAlphaF(0.6)
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(bg_color)
@@ -69,7 +70,7 @@ class VideoProgressBar(QWidget):
         if self._duration > 0:
             # 已播放进度
             played_w = (self._position / self._duration) * w
-            accent = QColor(COLOR_ACCENT)
+            accent = QColor(theme.color("accent"))
             p.setBrush(accent)
             p.drawRoundedRect(QRectF(0, bar_y, played_w, bar_h), radius, radius)
 
@@ -78,12 +79,12 @@ class VideoProgressBar(QWidget):
                 handle_r = 7
                 handle_x = max(handle_r, min(w - handle_r, played_w))
                 handle_y = bar_y + bar_h / 2
-                p.setBrush(QColor(COLOR_WHITE))
+                p.setBrush(QColor(theme.color("white")))
                 p.setPen(Qt.PenStyle.NoPen)
                 p.drawEllipse(QPointF(handle_x, handle_y), handle_r, handle_r)
 
         # 关键帧标记（三角形）
-        marker_color = QColor(COLOR_ACCENT_LIGHT)
+        marker_color = QColor(theme.color("accent_light"))
         p.setBrush(marker_color)
         p.setPen(Qt.PenStyle.NoPen)
         for kf in self._keyframes:
