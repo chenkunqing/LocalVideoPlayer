@@ -93,4 +93,5 @@ THUMBNAIL_SEEK_RATIO = 0.3
 KEYFRAMES_FILE = "keyframes.json"
 LIBRARY_FILE = "library.json"
 SHORTCUTS_FILE = "shortcuts.json"
+UPDATE_CONFIG_FILE = "update.json"
 # endregion

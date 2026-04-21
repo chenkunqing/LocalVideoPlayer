@@ -22,6 +22,8 @@ from constants import (
 from playlist_sidebar import PlaylistSidebar
 from shortcut_config import ShortcutConfig
 from shortcut_settings import ShortcutSettingsPanel
+from update_dialog import UpdateDialog
+from updater import UpdateConfig
 from video_library import VideoLibrary
 from video_scanner import VideoItem
 from utils import format_time
@@ -446,10 +448,17 @@ class PlaylistView(QWidget):
     """播放列表主视图"""
     play_video_requested = Signal(str)
 
-    def __init__(self, library: VideoLibrary, shortcut_config: ShortcutConfig | None = None, parent=None):
+    def __init__(
+        self,
+        library: VideoLibrary,
+        shortcut_config: ShortcutConfig | None = None,
+        update_config: UpdateConfig | None = None,
+        parent=None,
+    ):
         super().__init__(parent)
         self._library = library
         self._shortcut_config = shortcut_config
+        self._update_config = update_config
         self._filter_text = ""
         self._nav_mode = "all"
         self._current_playlist_id: str | None = None
@@ -467,6 +476,7 @@ class PlaylistView(QWidget):
         self._sidebar.nav_changed.connect(self._on_nav_changed)
         self._sidebar.search_changed.connect(self._on_search_changed)
         self._sidebar.recent_item_clicked.connect(self.play_video_requested.emit)
+        self._sidebar.check_update_clicked.connect(self._on_check_update)
         layout.addWidget(self._sidebar)
 
         # 主内容区
@@ -659,6 +669,12 @@ class PlaylistView(QWidget):
     def _on_search_changed(self, text: str):
         self._filter_text = text.strip().lower()
         self._refresh()
+
+    def _on_check_update(self) -> None:
+        if self._update_config is None:
+            return
+        dlg = UpdateDialog(self._update_config, self)
+        dlg.exec()
 
     def _on_add_folder(self):
         if self._nav_mode == "playlists" and self._current_playlist_id is None:

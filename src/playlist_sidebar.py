@@ -99,6 +99,15 @@ class _NavItem(QWidget):
             p.drawLine(cx - 4, cy - 2, cx + 4, cy - 2)
             p.drawLine(cx - 4, cy + 1, cx + 4, cy + 1)
             p.drawLine(cx - 3, cy + 4, cx + 3, cy + 4)
+        elif self._icon_type == "update":
+            # 下载箭头 + 底线
+            p.drawLine(cx, cy - s, cx, cy + 2)
+            path = QPainterPath()
+            path.moveTo(cx - 4, cy - 1)
+            path.lineTo(cx, cy + 4)
+            path.lineTo(cx + 4, cy - 1)
+            p.drawPath(path)
+            p.drawLine(cx - s, cy + s - 1, cx + s, cy + s - 1)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
@@ -173,6 +182,7 @@ class PlaylistSidebar(QWidget):
     nav_changed = Signal(str)
     search_changed = Signal(str)
     recent_item_clicked = Signal(str)
+    check_update_clicked = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -287,6 +297,10 @@ class PlaylistSidebar(QWidget):
         shortcuts_item.clicked.connect(self._on_nav_clicked)
         nav_layout.addWidget(shortcuts_item)
         self._nav_items["shortcuts"] = shortcuts_item
+
+        update_item = _NavItem("update", "检查更新", "update")
+        update_item.clicked.connect(lambda _: self.check_update_clicked.emit())
+        nav_layout.addWidget(update_item)
 
         nav_layout.addStretch()
 
