@@ -10,7 +10,10 @@ a = Analysis(
     [os.path.join(project_root, 'src', 'main.py')],
     pathex=[os.path.join(project_root, 'src')],
     binaries=[(os.path.join(project_root, 'libmpv-2.dll'), '.')],
-    datas=[],
+    datas=[
+        (os.path.join(project_root, 'src', 'VERSION'), '.'),
+        (os.path.join(project_root, 'icon.ico'), '.'),
+    ],
     hiddenimports=['mpv', 'bsdiff4'],
     hookspath=[],
     hooksconfig={},

@@ -12,6 +12,7 @@ os.add_dll_directory(_dll_dir)
 os.environ["PATH"] = _dll_dir + os.pathsep + os.environ.get("PATH", "")
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
 from theme import theme
@@ -43,6 +44,15 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("KK Player")
     app.setStyle("Fusion")
+
+    if getattr(sys, "frozen", False):
+        icon_path = os.path.join(sys._MEIPASS, "icon.ico")
+    else:
+        icon_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "icon.ico",
+        )
+    app.setWindowIcon(QIcon(icon_path))
 
     # 数据目录
     if getattr(sys, "frozen", False):
