@@ -71,13 +71,15 @@ cp "$PROJECT_ROOT/dist/KKPlayer.exe" "$RELEASES_DIR/KKPlayer.exe"
 FILE_SIZE=$(stat -c%s "$RELEASES_DIR/KKPlayer.exe" 2>/dev/null || stat -f%z "$RELEASES_DIR/KKPlayer.exe")
 SIZE_MB=$((FILE_SIZE / 1024 / 1024))
 
-# 7. 生成 latest.json
+# 7. 生成 latest.json（用 base64 传 changelog 避免特殊字符破坏语法）
+CHANGELOG_B64=$(echo "$CHANGELOG" | python -c "import sys,base64; print(base64.b64encode(sys.stdin.buffer.read()).decode())")
 python -c "
-import json
+import json, base64
+changelog = base64.b64decode('$CHANGELOG_B64').decode('utf-8').strip()
 data = {
     'version': '$VERSION',
     'download_url': 'http://${SERVER_IP}:3002/releases/KKPlayer.exe',
-    'changelog': '''$CHANGELOG''',
+    'changelog': changelog,
     'file_size': $FILE_SIZE,
     'patch_url': '$PATCH_URL' or None,
     'patch_size': $PATCH_SIZE or None,

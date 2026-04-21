@@ -96,18 +96,18 @@ class UpdateDownloader(QThread):
         self._cancelled = True
 
     def run(self) -> None:
+        dest = os.path.join(tempfile.gettempdir(), "KKPlayer_update.exe")
         try:
             req = urllib.request.Request(self._download_url)
             with urllib.request.urlopen(req, timeout=30) as resp:
                 total = int(resp.headers.get("Content-Length", 0))
-                tmp_dir = tempfile.gettempdir()
-                dest = os.path.join(tmp_dir, "KKPlayer_update.exe")
                 downloaded = 0
                 chunk_size = 65536
 
                 with open(dest, "wb") as f:
                     while True:
                         if self._cancelled:
+                            self._cleanup(dest)
                             self.download_failed.emit("下载已取消")
                             return
                         chunk = resp.read(chunk_size)
@@ -119,8 +119,16 @@ class UpdateDownloader(QThread):
 
             self.download_finished.emit(dest)
         except Exception as e:
+            self._cleanup(dest)
             if not self._cancelled:
                 self.download_failed.emit(f"下载失败：{e}")
+
+    @staticmethod
+    def _cleanup(path: str) -> None:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
 
 
 class UpdatePatcher(QThread):
@@ -140,6 +148,7 @@ class UpdatePatcher(QThread):
     def run(self) -> None:
         import bsdiff4
 
+        dest = os.path.join(tempfile.gettempdir(), "KKPlayer_update.exe")
         try:
             req = urllib.request.Request(self._patch_url)
             with urllib.request.urlopen(req, timeout=30) as resp:
@@ -165,15 +174,21 @@ class UpdatePatcher(QThread):
 
             new_data = bsdiff4.patch(old_data, bytes(patch_data))
 
-            tmp_dir = tempfile.gettempdir()
-            dest = os.path.join(tmp_dir, "KKPlayer_update.exe")
             with open(dest, "wb") as f:
                 f.write(new_data)
 
             self.download_finished.emit(dest)
         except Exception as e:
+            self._cleanup(dest)
             if not self._cancelled:
                 self.download_failed.emit(f"增量更新失败：{e}")
+
+    @staticmethod
+    def _cleanup(path: str) -> None:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
 
 
 def replace_and_restart(new_exe_path: str) -> None:
@@ -188,7 +203,7 @@ del "{new_exe_path}"
 start "" "{current_exe}"
 del "%~f0"
 """
-    with open(bat_path, "w", encoding="gbk") as f:
+    with open(bat_path, "w", encoding="mbcs") as f:
         f.write(script)
 
     subprocess.Popen(

@@ -23,6 +23,8 @@ class UpdateDialog(QDialog):
         self._checker: UpdateChecker | None = None
         self._downloader: UpdateDownloader | None = None
         self._update_info: dict[str, object] | None = None
+        self._new_exe_path: str = ""
+        self._is_patching: bool = False
 
         self.setWindowFlags(
             Qt.WindowType.Dialog | Qt.WindowType.FramelessWindowHint

@@ -116,13 +116,14 @@ class _NavItem(QWidget):
                 y2 = cy + int((r + 4) * math.sin(rad))
                 p.drawLine(x1, y1, x2, y2)
         elif self._icon_type == "moon":
-            path = QPainterPath()
-            path.moveTo(cx + 2, cy - 6)
-            path.cubicTo(cx - 3, cy - 4, cx - 3, cy + 4, cx + 2, cy + 6)
-            path.cubicTo(cx + 1, cy + 3, cx + 1, cy - 3, cx + 2, cy - 6)
-            p.setBrush(p.pen().color())
-            p.drawPath(path)
+            r = 6
+            color = p.pen().color()
+            p.setPen(Qt.PenStyle.NoPen)
+            p.setBrush(color)
+            p.drawPie(cx - r, cy - r, r * 2, r * 2, 90 * 16, 180 * 16)
             p.setBrush(Qt.BrushStyle.NoBrush)
+            p.setPen(QPen(color, 1.5))
+            p.drawEllipse(cx - r, cy - r, r * 2, r * 2)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:

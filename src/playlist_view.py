@@ -40,6 +40,8 @@ class _VideoRow(QWidget):
         self.setFixedHeight(56)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setAttribute(Qt.WidgetAttribute.WA_Hover)
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
+        self.setStyleSheet("background: transparent;")
         theme.theme_changed.connect(self.update)
 
     def paintEvent(self, event):
@@ -47,11 +49,7 @@ class _VideoRow(QWidget):
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         w, h = self.width(), self.height()
 
-        # hover 背景
-        if self._hovered:
-            p.setBrush(QColor(theme.color("hover")))
-            p.setPen(Qt.PenStyle.NoPen)
-            p.drawRoundedRect(0, 0, w, h, 8, 8)
+        p.fillRect(0, 0, w, h, QColor(theme.color("bg")))
 
         # 列宽比例: 50 | 52(thumb) | flex | flex | 100
         col1_w = 50
@@ -93,21 +91,10 @@ class _VideoRow(QWidget):
             p.setPen(Qt.PenStyle.NoPen)
             p.drawRoundedRect(x_offset, thumb_y, 40, 40, 4, 4)
 
-        # 播放三角（hover 时显示在缩略图上）
-        if self._hovered:
-            p.setBrush(QColor(theme.color("white")))
-            tri = QPainterPath()
-            tcx, tcy = x_offset + 20, thumb_y + 20
-            tri.moveTo(tcx - 5, tcy - 6)
-            tri.lineTo(tcx + 6, tcy)
-            tri.lineTo(tcx - 5, tcy + 6)
-            tri.closeSubpath()
-            p.drawPath(tri)
-
         x_offset += 52
 
         # 文件名 + 格式
-        p.setPen(QColor(theme.color("text")))
+        p.setPen(QColor(theme.color("accent") if self._hovered else theme.color("text")))
         font.setPixelSize(13)
         font.setBold(True)
         p.setFont(font)
@@ -171,6 +158,8 @@ class _ListHeader(QWidget):
     def paintEvent(self, event):
         p = QPainter(self)
         w, h = self.width(), self.height()
+
+        p.fillRect(0, 0, w, h, QColor(theme.color("bg")))
 
         col1_w = 50
         thumb_w = 52
@@ -632,7 +621,7 @@ class PlaylistView(QWidget):
             }}
         """)
         scroll_style = f"""
-            QScrollArea {{ border: none; background: transparent; }}
+            QScrollArea {{ border: none; background: {theme.color("bg")}; }}
             QScrollBar:vertical {{
                 width: 6px;
                 background: transparent;
@@ -646,8 +635,12 @@ class PlaylistView(QWidget):
                 height: 0;
             }}
         """
+        bg = theme.color("bg")
+        viewport_style = f"background: {bg};"
         self._video_scroll.setStyleSheet(scroll_style)
+        self._video_scroll.viewport().setStyleSheet(viewport_style)
         self._playlist_grid_scroll.setStyleSheet(scroll_style)
+        self._playlist_grid_scroll.viewport().setStyleSheet(viewport_style)
         empty_style = f"""
             color: {theme.color("text_dark")};
             font-size: 14px;

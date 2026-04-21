@@ -1,6 +1,9 @@
 {
-  "version": "47e58a4",
+  "version": "1.0.3",
   "download_url": "http://119.91.95.23:3002/releases/KKPlayer.exe",
-  "changelog": "- feat: 添加自动更新功能 + 深浅主题切换\n- refactor: 优化窗口拖拽调整大小和标题栏拖动\n- feat: 添加手动检查更新功能（自定义服务器 + 下载安装包）\n- feat: 新增 Shift+左右箭头按帧跳转快捷键\n- feat: 侧边栏底部显示版本号（git commit hash）\n- refactor: 用系统原生 startSystemResize 替代手动窗口拖拽调整，提升流畅度\n- refactor: 排除未使用的DLL和Python模块以减小打包体积(93MB→69MB)\n- refactor: 排除未使用的DLL和Python模块以减小打包体积(93MB→69MB)\n- fix: 修复打包后添加文件夹看不到视频列表的问题\n- refactor: 打包改为单文件模式并排除未使用的PySide6模块以减小体积",
-  "file_size": 69903576
+  "changelog": "- chore: gitignore 添加发版产物 KKPlayer.exe\n- fix: 修复发版脚本 JSON 换行符问题及 Windows 兼容性\n- feat: 添加自动更新功能 + 深浅主题切换\n- refactor: 优化窗口拖拽调整大小和标题栏拖动\n- feat: 添加手动检查更新功能（自定义服务器 + 下载安装包）\n- feat: 新增 Shift+左右箭头按帧跳转快捷键\n- feat: 侧边栏底部显示版本号（git commit hash）\n- refactor: 用系统原生 startSystemResize 替代手动窗口拖拽调整，提升流畅度\n- refactor: 排除未使用的DLL和Python模块以减小打包体积(93MB→69MB)\n- refactor: 排除未使用的DLL和Python模块以减小打包体积(93MB→69MB)",
+  "file_size": 70348925,
+  "patch_url": "http://119.91.95.23:3002/releases/patch.bin",
+  "patch_size": 857772,
+  "prev_version": "1.0.2"
 }

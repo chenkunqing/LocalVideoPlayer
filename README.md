@@ -83,13 +83,23 @@ python dev.py
 python src/main.py "C:\path\to\video.mp4"
 ```
 
-### 打包为可执行文件
+### 本地打包
 
 ```bash
-pyinstaller build.spec
+python -m PyInstaller build.spec --noconfirm
 ```
 
-输出路径：`dist/KKPlayer/KKPlayer.exe`
+输出路径：`dist/KKPlayer.exe`
+
+### 一键发版（打包 + 生成补丁 + 上传服务器）
+
+```bash
+bash server/publish.sh
+```
+
+自动完成：版本号递增 → PyInstaller 打包 → bsdiff4 生成增量补丁 → 生成 latest.json → scp 上传到服务器 → git 提交版本号。
+
+需要先配置服务器 SSH 免密登录。
 
 ## 默认快捷键
 
