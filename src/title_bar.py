@@ -122,9 +122,6 @@ class TitleBar(QWidget):
         layout.addWidget(self._max_btn)
         layout.addWidget(self._close_btn)
 
-        self._dragging = False
-        self._drag_start = None
-
     def set_mode(self, mode: str):
         """切换标题栏模式: 'library' 隐藏返回按钮, 'player' 显示返回按钮"""
         self._home_btn.setVisible(mode == "player")
@@ -134,21 +131,12 @@ class TitleBar(QWidget):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
-            self._dragging = True
-            self._drag_start = event.globalPosition().toPoint() - self.window().pos()
-
-    def mouseMoveEvent(self, event):
-        if self._dragging and self._drag_start is not None:
-            new_pos = event.globalPosition().toPoint() - self._drag_start
-            if self.window().isMaximized():
-                self.window().showNormal()
-                self._drag_start = event.globalPosition().toPoint() - self.window().pos()
-            else:
-                self.window().move(new_pos)
-
-    def mouseReleaseEvent(self, event):
-        self._dragging = False
-        self._drag_start = None
+            win = self.window()
+            if win.isMaximized():
+                win.showNormal()
+            handle = win.windowHandle()
+            if handle:
+                handle.startSystemMove()
 
     def mouseDoubleClickEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:

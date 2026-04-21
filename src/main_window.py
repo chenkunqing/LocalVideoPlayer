@@ -18,6 +18,7 @@ from shortcut_config import ShortcutConfig
 from video_library import VideoLibrary
 from playlist_view import PlaylistView
 from shortcuts import setup_shortcuts
+from updater import UpdateConfig
 from utils import format_time
 
 
@@ -47,6 +48,9 @@ class MainWindow(QWidget):
         # 快捷键配置
         self.shortcut_config = ShortcutConfig(data_dir)
 
+        # 更新配置
+        self.update_config = UpdateConfig(data_dir)
+
         # 主布局
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -64,7 +68,7 @@ class MainWindow(QWidget):
         self._view_stack = QStackedWidget()
 
         # 库视图
-        self.playlist_view = PlaylistView(self.video_library, self.shortcut_config)
+        self.playlist_view = PlaylistView(self.video_library, self.shortcut_config, self.update_config)
         self.playlist_view.play_video_requested.connect(self._on_play_requested)
         self._view_stack.addWidget(self.playlist_view)
 
@@ -105,7 +109,7 @@ class MainWindow(QWidget):
         self._hide_timer.start(CONTROLS_HIDE_DELAY_MS)
 
         # 窗口大小调整边距（无边框窗口，委托系统原生调整）
-        self._resize_margin = 8
+        self._resize_margin = 12
 
     def _connect_signals(self):
         mpv = self.mpv_widget
@@ -249,20 +253,17 @@ class MainWindow(QWidget):
         if self._view_stack.currentIndex() == 1:
             self.controls_overlay.show_controls()
             self._hide_timer.start(CONTROLS_HIDE_DELAY_MS)
-
-        # 无边框窗口：悬停时更新光标
-        if not self._is_fullscreen and not self.isMaximized():
-            self._update_resize_cursor(event.position().toPoint())
         super().mouseMoveEvent(event)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
-            edge = self._get_resize_edge(event.position().toPoint())
-            if edge and not self._is_fullscreen and not self.isMaximized():
-                qt_edges = self._to_qt_edges(edge)
-                if qt_edges and self.windowHandle():
-                    self.windowHandle().startSystemResize(qt_edges)
-                    return
+            if not self._is_fullscreen and not self.isMaximized():
+                edge = self._get_resize_edge(event.position().toPoint())
+                if edge:
+                    qt_edges = self._to_qt_edges(edge)
+                    if qt_edges and self.windowHandle():
+                        self.windowHandle().startSystemResize(qt_edges)
+                        return
         # 点击视频区域 → 播放/暂停（仅播放器可见时）
         if self._view_stack.currentIndex() == 1:
             pos = event.position()
@@ -284,6 +285,13 @@ class MainWindow(QWidget):
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
 
+    _EDGE_MAP = {
+        "left": Qt.Edge.LeftEdge,
+        "right": Qt.Edge.RightEdge,
+        "top": Qt.Edge.TopEdge,
+        "bottom": Qt.Edge.BottomEdge,
+    }
+
     def _get_resize_edge(self, pos):
         m = self._resize_margin
         w, h = self.width(), self.height()
@@ -297,28 +305,6 @@ class MainWindow(QWidget):
         elif pos.y() > h - m:
             edges.append("bottom")
         return "_".join(edges) if edges else None
-
-    def _update_resize_cursor(self, pos):
-        edge = self._get_resize_edge(pos)
-        cursors = {
-            "left": Qt.CursorShape.SizeHorCursor,
-            "right": Qt.CursorShape.SizeHorCursor,
-            "top": Qt.CursorShape.SizeVerCursor,
-            "bottom": Qt.CursorShape.SizeVerCursor,
-            "top_left": Qt.CursorShape.SizeFDiagCursor,
-            "bottom_right": Qt.CursorShape.SizeFDiagCursor,
-            "top_right": Qt.CursorShape.SizeBDiagCursor,
-            "bottom_left": Qt.CursorShape.SizeBDiagCursor,
-        }
-        if edge and edge in cursors:
-            self.setCursor(cursors[edge])
-
-    _EDGE_MAP = {
-        "left": Qt.Edge.LeftEdge,
-        "right": Qt.Edge.RightEdge,
-        "top": Qt.Edge.TopEdge,
-        "bottom": Qt.Edge.BottomEdge,
-    }
 
     def _to_qt_edges(self, edge_str: str) -> Qt.Edges:
         result = Qt.Edge(0)
