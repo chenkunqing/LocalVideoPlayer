@@ -40,6 +40,12 @@ def setup_shortcuts(window, config: ShortcutConfig) -> list[QShortcut]:
     def seek_bwd_3():
         mpv.seek(-3)
 
+    def frame_forward():
+        mpv.frame_step()
+
+    def frame_backward():
+        mpv.frame_back_step()
+
     def volume_up():
         v = min(100, mpv.get_volume() + 5)
         mpv.set_volume(v)
@@ -110,6 +116,8 @@ def setup_shortcuts(window, config: ShortcutConfig) -> list[QShortcut]:
     _bind("seek_backward_1", seek_bwd_1)
     _bind("seek_forward_3", seek_fwd_3)
     _bind("seek_backward_3", seek_bwd_3)
+    _bind("frame_forward", frame_forward)
+    _bind("frame_backward", frame_backward)
     _bind("volume_up", volume_up)
     _bind("volume_down", volume_down)
     _bind("mute_toggle", mute_toggle)

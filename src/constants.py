@@ -40,6 +40,8 @@ SHORTCUTS = {
     "seek_backward_1": "Left",
     "seek_forward_3": "Ctrl+Right",
     "seek_backward_3": "Ctrl+Left",
+    "frame_forward": "Shift+Right",
+    "frame_backward": "Shift+Left",
     "volume_up": "Shift+Up",
     "volume_down": "Shift+Down",
     "mute_toggle": "M",

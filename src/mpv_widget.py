@@ -68,6 +68,12 @@ class MpvWidget(QWidget):
     def seek_absolute(self, seconds):
         self.player.seek(seconds, reference="absolute", precision="exact")
 
+    def frame_step(self) -> None:
+        self.player.command("frame-step")
+
+    def frame_back_step(self) -> None:
+        self.player.command("frame-back-step")
+
     def seek_keyframe(self, seconds):
         """拖拽时使用关键帧精度（更快）"""
         self.player.seek(seconds, reference="absolute", precision="keyframes")

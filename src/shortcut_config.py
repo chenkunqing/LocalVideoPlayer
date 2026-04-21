@@ -19,6 +19,8 @@ SHORTCUT_LABELS: dict[str, str] = {
     "seek_backward_1": "快退 1 秒",
     "seek_forward_3": "快进 3 秒",
     "seek_backward_3": "快退 3 秒",
+    "frame_forward": "下一帧",
+    "frame_backward": "上一帧",
     "volume_up": "音量增大",
     "volume_down": "音量减小",
     "mute_toggle": "静音切换",
