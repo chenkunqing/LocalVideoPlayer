@@ -123,6 +123,59 @@ class UpdateDownloader(QThread):
                 self.download_failed.emit(f"下载失败：{e}")
 
 
+class UpdatePatcher(QThread):
+    """后台线程：下载补丁并合并生成新 exe"""
+    progress = Signal(int, int)
+    download_finished = Signal(str)
+    download_failed = Signal(str)
+
+    def __init__(self, patch_url: str, parent=None):
+        super().__init__(parent)
+        self._patch_url = patch_url
+        self._cancelled = False
+
+    def cancel(self) -> None:
+        self._cancelled = True
+
+    def run(self) -> None:
+        import bsdiff4
+
+        try:
+            req = urllib.request.Request(self._patch_url)
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                total = int(resp.headers.get("Content-Length", 0))
+                patch_data = bytearray()
+                chunk_size = 65536
+
+                while True:
+                    if self._cancelled:
+                        self.download_failed.emit("下载已取消")
+                        return
+                    chunk = resp.read(chunk_size)
+                    if not chunk:
+                        break
+                    patch_data.extend(chunk)
+                    self.progress.emit(len(patch_data), total)
+
+            self.progress.emit(total, total)
+
+            current_exe = sys.executable
+            with open(current_exe, "rb") as f:
+                old_data = f.read()
+
+            new_data = bsdiff4.patch(old_data, bytes(patch_data))
+
+            tmp_dir = tempfile.gettempdir()
+            dest = os.path.join(tmp_dir, "KKPlayer_update.exe")
+            with open(dest, "wb") as f:
+                f.write(new_data)
+
+            self.download_finished.emit(dest)
+        except Exception as e:
+            if not self._cancelled:
+                self.download_failed.emit(f"增量更新失败：{e}")
+
+
 def replace_and_restart(new_exe_path: str) -> None:
     """通过批处理脚本替换当前 exe 并重启（Windows 无法覆盖运行中的 exe）"""
     current_exe = sys.executable

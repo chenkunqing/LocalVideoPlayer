@@ -13,7 +13,6 @@ env/
 # PyInstaller
 dist/
 build_temp/
-src/VERSION
 
 UI/
 

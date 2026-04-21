@@ -8,7 +8,8 @@ from PySide6.QtWidgets import (
 
 from theme import theme
 from updater import (
-    UpdateConfig, UpdateChecker, UpdateDownloader, replace_and_restart,
+    UpdateConfig, UpdateChecker, UpdateDownloader, UpdatePatcher,
+    replace_and_restart,
 )
 from version import get_version
 
@@ -220,15 +221,40 @@ class UpdateDialog(QDialog):
 
     # region 下载
 
+    def _can_patch(self) -> bool:
+        """判断是否可以走增量更新"""
+        if not self._update_info:
+            return False
+        patch_url = str(self._update_info.get("patch_url", ""))
+        prev_version = str(self._update_info.get("prev_version", ""))
+        return bool(patch_url) and prev_version == get_version()
+
     def _start_download(self) -> None:
         if not self._update_info:
             return
-        download_url = str(self._update_info.get("download_url", ""))
-        if not download_url:
-            return
 
+        self._is_patching = self._can_patch()
+        self._show_download_ui()
+
+        if self._is_patching:
+            patch_url = str(self._update_info["patch_url"])
+            self._downloader = UpdatePatcher(patch_url, self)
+            self._downloader.download_failed.connect(self._on_patch_failed)
+        else:
+            download_url = str(self._update_info.get("download_url", ""))
+            if not download_url:
+                return
+            self._downloader = UpdateDownloader(download_url, self)
+            self._downloader.download_failed.connect(self._on_download_failed)
+
+        self._downloader.progress.connect(self._on_download_progress)
+        self._downloader.download_finished.connect(self._on_download_finished)
+        self._downloader.start()
+
+    def _show_download_ui(self) -> None:
         self._clear_content()
-        self._title_label.setText("下载更新")
+        label = "增量更新中..." if self._is_patching else "下载更新"
+        self._title_label.setText(label)
 
         self._progress_label = QLabel("正在下载...")
         self._progress_label.setStyleSheet(
@@ -263,6 +289,17 @@ class UpdateDialog(QDialog):
         self._content_layout.addStretch()
 
         self._add_buttons("取消下载", self._cancel_download)
+
+    def _on_patch_failed(self, msg: str) -> None:
+        """增量更新失败，回退到全量下载"""
+        self._is_patching = False
+        download_url = str(self._update_info.get("download_url", ""))
+        if not download_url:
+            self._on_download_failed(msg)
+            return
+
+        self._show_download_ui()
+        self._progress_label.setText("增量失败，切换全量下载...")
 
         self._downloader = UpdateDownloader(download_url, self)
         self._downloader.progress.connect(self._on_download_progress)
