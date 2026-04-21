@@ -34,6 +34,9 @@ Thumbs.db
 Desktop.ini
 .DS_Store
 
+# 发版产物
+server/releases/KKPlayer.exe
+
 # 环境变量
 .env
 .env.local
